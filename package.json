@@ -1,6 +1,6 @@
 {
-  "name": "Sine",
-  "version": "1.0.0",
+  "name": "Blog",
+  "version": "0.2.0",
   "description": "php-react-template",
   "main": "gulpfile.js",
   "scripts": {
@@ -12,7 +12,7 @@
   ],
     "repository": {
         "type": "git",
-        "url": "https://github.com/svenanders/react-sinewave"
+        "url": "https://github.com/svenanders/react-fullscreen"
     },
   "author": "Sven Anders Robbestad <anders@robbestad.com>",
   "license": "CC",
