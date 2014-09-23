@@ -72,7 +72,13 @@ $data=json_decode($blogger->fetch('http://api.robbestad.com/robbestad'),true);
     <meta http-equiv='Content-type' content='text/html; charset=utf-8'>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="description" content="<?php echo $json["name"]; ?> <?php echo $json["version"]; ?>">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<!--    <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0;">-->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no">
+    <meta name = "viewport" content = "width = 320,
+       initial-scale = 2.3, user-scalable = no">
+
     <title><?php echo $json["name"]; ?></title>
     <link href="css/style.min.css" type="text/css" rel="stylesheet">
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
