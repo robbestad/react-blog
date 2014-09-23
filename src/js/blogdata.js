@@ -4,10 +4,11 @@
 
 WebFontConfig = {
     google: {
-        families: ['Lato'],
-        text: 'Robestad.com'
+        families: ['Lobster','Open Sans']
     }
 };
+
+//text: 'Robestad.com'
 
 (function() {
     var wf = document.createElement('script');
@@ -17,7 +18,7 @@ WebFontConfig = {
     wf.async = 'true';
     var s = document.getElementsByTagName('script')[0];
     s.parentNode.insertBefore(wf, s);
-    })();
+})();
 /*
 var blogData=[];
 (function(){

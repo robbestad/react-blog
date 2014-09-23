@@ -1,18 +1,23 @@
 <?php
 $json = json_decode(file_get_contents(__DIR__ . "/../package.json"), true);
-require __DIR__ . '/php/get_ip.php';
+//require __DIR__ . '/php/get_ip.php';
+//
+//if (@$details->country === "NO") {
+//    $l_hjem = "Hjem";
+//    $l_om = "Om";
+//    $l_kontakt = "Kontakt";
+//    $l_kode = "Kode";
+//} else {
+//    $l_hjem = "Home";
+//    $l_om = "About";
+//    $l_kontakt = "Contact";
+//    $l_kode = "Code";
+//}
+$l_hjem = "Home";
+$l_om = "About";
+$l_kontakt = "Contact";
+$l_kode = "Code";
 
-if (@$details->country === "NO") {
-    $l_hjem = "Hjem";
-    $l_om = "Om";
-    $l_kontakt = "Kontakt";
-    $l_kode = "Kode";
-} else {
-    $l_hjem = "Home";
-    $l_om = "About";
-    $l_kontakt = "Contact";
-    $l_kode = "Code";
-}
 $requestURL = "http://api.robbestad.com/robbestad";
 class Blogger{
 
@@ -72,13 +77,10 @@ $data=json_decode($blogger->fetch('http://api.robbestad.com/robbestad'),true);
     <meta http-equiv='Content-type' content='text/html; charset=utf-8'>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="description" content="<?php echo $json["name"]; ?> <?php echo $json["version"]; ?>">
-    <meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="format-detection" content="telephone=no">
-<!--    <meta name = "viewport" content = "width = 320,-->
-<!--       initial-scale = 2.3, user-scalable = no">-->
-<!---->
     <title><?php echo $json["name"]; ?></title>
     <link href="css/style.min.css" type="text/css" rel="stylesheet">
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
@@ -132,7 +134,7 @@ $data=json_decode($blogger->fetch('http://api.robbestad.com/robbestad'),true);
 <!--          <div id="blogdata"></div>-->
     </div>
         <div class="right-sidebar col-sm-1 col-md-1 hidden-xs" >
-Ida Alana
+
             </div>
 </div>
 <!-- /div.container -->
