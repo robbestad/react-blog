@@ -113,6 +113,8 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
 
         </div>
         <div class="article col-sm-8 col-md-9 col-lg-10 col-xs-12">
+            <div class="article col-sm-12 col-md-11 col-lg-11 col-xs-12">
+
             <?php echo $data["_embedded"]["robbestad"][$articleNumber]["content"]; ?>
             <div id="disqus_thread"></div>
             <script type="text/javascript">
@@ -133,6 +135,7 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
             <a href="http://disqus.com" class="dsq-brlink">comments powered by <span
                     class="logo-disqus">Disqus</span></a>
             <!--          <div id="blogdata"></div>-->
+        </div>
         </div>
     </div>
     <!-- /div.container -->
