@@ -1,25 +1,14 @@
 <?php
 $json = json_decode(file_get_contents(__DIR__ . "/../package.json"), true);
-//require __DIR__ . '/php/get_ip.php';
-//
-//if (@$details->country === "NO") {
-//    $l_hjem = "Hjem";
-//    $l_om = "Om";
-//    $l_kontakt = "Kontakt";
-//    $l_kode = "Kode";
-//} else {
-//    $l_hjem = "Home";
-//    $l_om = "About";
-//    $l_kontakt = "Contact";
-//    $l_kode = "Code";
-//}
 $l_hjem = "Home";
 $l_om = "About";
 $l_kontakt = "Contact";
 $l_kode = "Code";
 
 $requestURL = "http://api.robbestad.com/robbestad";
-class Blogger{
+
+class Blogger
+{
 
 
     public function __construct()
@@ -31,11 +20,10 @@ class Blogger{
     {
         $curl = curl_init();
 
-        if($header)
+        if ($header)
             curl_setopt($curl, CURLOPT_HEADER, $header);
 
-        switch ($method)
-        {
+        switch ($method) {
             case "POST":
                 curl_setopt($curl, CURLOPT_POST, 1);
 
@@ -49,28 +37,37 @@ class Blogger{
                 if ($data)
                     $url = sprintf("%s?%s", $url, http_build_query($data));
         }
-
-        // Optional Authentication:
         curl_setopt($curl, CURLOPT_HTTPAUTH, 'Basic YW5kZXJzOmFuZGVycw==');
-//        curl_setopt($curl, CURLOPT_USERPWD, "username:password");
-
         curl_setopt($curl, CURLOPT_URL, $url);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
 
         return curl_exec($curl);
     }
-    public function fetch($requestURL){
-try {
-    return $this->callAPI('GET', $requestURL, "Content-Type: application/hal+json");
-} catch (Exception $e) {
-    return $e;
-}
+
+    public function fetch($requestURL)
+    {
+        try {
+            return $this->callAPI('GET', $requestURL, "Content-Type: application/hal+json");
+        } catch (Exception $e) {
+            return $e;
+        }
+    }
 }
 
-
-}
 $blogger = new Blogger();
-$data=json_decode($blogger->fetch('http://api.robbestad.com/robbestad'),true);
+$data = json_decode($blogger->fetch('http://api.robbestad.com/robbestad'), true);
+$articleNumber=$data['_embedded']['robbestad'][0]["id"];
+
+if(empty($_GET["id"])){
+ $articleNumber=0;
+} else {
+for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
+    if($data['_embedded']['robbestad'][$i]["id"]===$_GET["id"]){
+        $articleNumber=$i;
+            break;
+    }
+}
+}
 ?>
 <!DOCTYPE html>
 <head>
@@ -93,7 +90,7 @@ $data=json_decode($blogger->fetch('http://api.robbestad.com/robbestad'),true);
 </head>
 <body>
 
-<div id="masthead" ></div>
+<div id="masthead"></div>
 <div class="container-fluid">
     <div class="header">
         <ul class="nav nav-pills pull-right">
@@ -101,61 +98,52 @@ $data=json_decode($blogger->fetch('http://api.robbestad.com/robbestad'),true);
             <li><a href="http://www.robbestad.com"><?php echo $l_om; ?></a></li>
             <li><a href="mailto:anders@robbestad.com"><?php echo $l_kontakt; ?></a></li>
         </ul>
+        <a href="/index.php">
         <h1 class="text-muted" id="content">Headline</h1>
+        </a>
     </div>
-
-<!---->
-<!--   <div class="jumbotron">-->
-<!---->
-<!--        --><?php //if (@$details->country === "NO") { ?>
-<!--            <p>-->
-<!--                Robbestad.com-->
-<!--            </p>-->
-<!--        --><?php //} else { ?>
-<!--            <p>-->
-<!--                Robbestad.com-->
-<!--            </p>-->
-<!--        --><?php //} ?>
-<!--    </div>-->
 
     <div class="row">
-      <div class="col-md-3 col-xs-2 hidden-xs sidebar">
-          <?php foreach($data["_embedded"]["robbestad"] as $item){
-              echo '<h2>'.($item["title"].'</h2><hr>');
-          }
-          ?>
+        <div class="col-md-3 col-xs-2 hidden-xs sidebar">
+            <?php foreach ($data["_embedded"]["robbestad"] as $item) {
+                echo '<h2><a
+                    href="/index.php?id=' . $item["id"] . '#nosplash">' . ($item["title"] . '</a></h2><hr>');
+            }
+            ?>
 
-      </div>
-      <div class="article col-sm-8 col-md-8 col-xs-12" >
-          <?php
-          echo $data["_embedded"]["robbestad"][0]["content"];
+        </div>
+        <div class="article col-sm-8 col-md-8 col-xs-12">
 
-        ?>
+            <?php echo $data["_embedded"]["robbestad"][$articleNumber]["content"]; ?>
+            <div id="disqus_thread"></div>
+            <script type="text/javascript">
+                /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+                var disqus_shortname = 'robbestadcom'; // required: replace example with your forum shortname
 
-          <div id="disqus_thread"></div>
-          <script type="text/javascript">
-              /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
-              var disqus_shortname = 'robbestadcom'; // required: replace example with your forum shortname
+                /* * * DON'T EDIT BELOW THIS LINE * * */
+                (function () {
+                    var dsq = document.createElement('script');
+                    dsq.type = 'text/javascript';
+                    dsq.async = true;
+                    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+            </script>
+            <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by
+                    Disqus.</a></noscript>
+            <a href="http://disqus.com" class="dsq-brlink">comments powered by <span
+                    class="logo-disqus">Disqus</span></a>
 
-              /* * * DON'T EDIT BELOW THIS LINE * * */
-              (function() {
-                  var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-                  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-                  (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-              })();
-          </script>
-          <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
-          <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
 
-          <!--          <div id="blogdata"></div>-->
+            <!--          <div id="blogdata"></div>-->
+        </div>
+        <div class="right-sidebar col-sm-1 col-md-1 hidden-xs">
+
+        </div>
     </div>
-        <div class="right-sidebar col-sm-1 col-md-1 hidden-xs" >
+    <!-- /div.container -->
 
-            </div>
-</div>
-<!-- /div.container -->
-
-<div id="myfooter"></div>
+    <div id="myfooter"></div>
 </body>
 <!-- Contains jQuery, React and compiled js (included jsx) -->
 <script type="text/javascript" src="./js/libs.min.js"></script>

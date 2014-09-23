@@ -19,6 +19,16 @@ WebFontConfig = {
     var s = document.getElementsByTagName('script')[0];
     s.parentNode.insertBefore(wf, s);
 })();
+
+var displayBlogId=function(){
+    var hash = window.location.hash;
+    document.getElementById(hash).style;
+    //$("."+hash).css("display","block");
+}
+
+
+
+
 /*
 var blogData=[];
 (function(){

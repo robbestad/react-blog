@@ -19070,11 +19070,15 @@ var React = require('react'),
             || document.body.parentNode || document.body).scrollTop,
             width=document.body.clientWidth;
 
+
         var dontShowVal;
         if(this.refs.masthead.getDOMNode().style.opacity <= 0
             && scrollTop > 0){
             dontShowVal=true;
-        } else dontShowVal = this.props.dontShow;
+        } else if(window.location.hash==="#nosplash"){
+            dontShowVal=true;
+        }
+        else dontShowVal = this.props.dontShow;
 
         this.setProps({scrollTop: -scrollTop, logoTop:scrollTop/1.75,
             width: width, dontShow:dontShowVal});

@@ -35,7 +35,10 @@ h1{
   background-color: #e0e0e0;
 
 }
-
+a{
+  text-decoration: none;
+  color: #000000;
+}
 .container-fluid{
   background-color: #e0e0e0;
 }
@@ -44,7 +47,10 @@ h1{
   padding: 5px 10px 10px 10px;
   border-radius: 10px;
   margin-bottom: 50px;
+}
 
+.singlearticle{
+  display:none;
 }
 .row{
   display:inline-flex;
