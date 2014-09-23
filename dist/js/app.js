@@ -19077,7 +19077,7 @@ var React = require('react'),
             dontShowVal=true;
         } else if(window.location.hash==="#nosplash"){
             dontShowVal=true;
-        } else if(window.innerWidth<640){
+        } else if(window.innerWidth<768){
             dontShowVal=true;
         }
         else dontShowVal = this.props.dontShow;
@@ -19101,10 +19101,8 @@ var React = require('react'),
             //top: this.props.scrollTop,
             left: '0',
             top: '0',
-            //width: '100%',
-            width: window.outerWidth,
-            height: window.outerHeight,
-            //background: 'transparent',
+            width: window.innerWidth,
+            height: window.innerHeight,
             background: 'url(img/bg.png) repeat 50% 50%',
             backgroundSize:'cover',
             fontFamily:'Arial, Verdana, sans-serif',
@@ -19117,7 +19115,7 @@ var React = require('react'),
             top: ((window.innerHeight/2)-100)+"px",
             color: 'white',
             fontSize: '7rem',
-            left: (window.outerWidth/2)-(567/2)+"px",
+            left: (window.innerWidth/2)-(567/2)+"px",
             position: 'fixed'
         }
       return (React.DOM.div({ref: "masthead", style: divStyle}, 

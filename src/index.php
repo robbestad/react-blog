@@ -57,7 +57,6 @@ class Blogger
 $blogger = new Blogger();
 $data = json_decode($blogger->fetch('http://api.robbestad.com/robbestad'), true);
 $articleNumber=$data['_embedded']['robbestad'][0]["id"];
-
 if(empty($_GET["id"])){
  $articleNumber=0;
 } else {
@@ -94,7 +93,7 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
 <div class="container-fluid">
     <div class="header">
         <ul class="nav nav-pills pull-right">
-            <li class="active"><a href="index.html"><?php echo $l_hjem; ?></a></li>
+            <li class="active"><a href="/index.php"><?php echo $l_hjem; ?></a></li>
             <li><a href="http://www.robbestad.com"><?php echo $l_om; ?></a></li>
             <li><a href="mailto:anders@robbestad.com"><?php echo $l_kontakt; ?></a></li>
         </ul>
