@@ -13,6 +13,59 @@ if (@$details->country === "NO") {
     $l_kontakt = "Contact";
     $l_kode = "Code";
 }
+$requestURL = "http://api.robbestad.com/robbestad";
+class Blogger{
+
+
+    public function __construct()
+    {
+
+    }
+
+    private function callAPI($method, $url, $header, $data = false)
+    {
+        $curl = curl_init();
+
+        if($header)
+            curl_setopt($curl, CURLOPT_HEADER, $header);
+
+        switch ($method)
+        {
+            case "POST":
+                curl_setopt($curl, CURLOPT_POST, 1);
+
+                if ($data)
+                    curl_setopt($curl, CURLOPT_POSTFIELDS, $data);
+                break;
+            case "PUT":
+                curl_setopt($curl, CURLOPT_PUT, 1);
+                break;
+            default:
+                if ($data)
+                    $url = sprintf("%s?%s", $url, http_build_query($data));
+        }
+
+        // Optional Authentication:
+        curl_setopt($curl, CURLOPT_HTTPAUTH, 'Basic YW5kZXJzOmFuZGVycw==');
+//        curl_setopt($curl, CURLOPT_USERPWD, "username:password");
+
+        curl_setopt($curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+
+        return curl_exec($curl);
+    }
+    public function fetch($requestURL){
+try {
+    return $this->callAPI('GET', $requestURL, "Content-Type: application/hal+json");
+} catch (Exception $e) {
+    return $e;
+}
+}
+
+
+}
+$blogger = new Blogger();
+$data=json_decode($blogger->fetch('http://api.robbestad.com/robbestad'),true);
 ?>
 <!DOCTYPE html>
 <head>
@@ -30,88 +83,57 @@ if (@$details->country === "NO") {
     <![endif]-->
 
 </head>
-
 <body>
-<div id="background"></div>
-<div class="container">
+
+<div id="masthead" ></div>
+<div class="container-fluid">
     <div class="header">
         <ul class="nav nav-pills pull-right">
             <li class="active"><a href="index.html"><?php echo $l_hjem; ?></a></li>
             <li><a href="http://www.robbestad.com"><?php echo $l_om; ?></a></li>
             <li><a href="mailto:anders@robbestad.com"><?php echo $l_kontakt; ?></a></li>
         </ul>
-        <h3 class="text-muted" id="content">Headline</h3>
-    </div>
-<!-- <div id="background"></div>
- -->
-    <div id="fastsin">
-
-    </div>
-    <!--    <div id="draw-target"></div>-->
-    <div class="jumbotron">
-
-        <?php if (@$details->country === "NO") { ?>
-            <p>
-                The shattered water made a misty din.<br/>
-                Great waves looked over others coming in,<br/>
-                And thought of doing something to the shore<br/>
-                That water never did to land before.<br/>
-                The clouds were low and hairy in the skies,<br/>
-                Like locks blown forward in the gleam of eyes.<br/>
-                You could not tell, and yet it looked as if<br/>
-                The shore was lucky in being backed by cliff,<br/>
-                The cliff in being backed by continent;<br/>
-                It looked as if a night of dark intent<br/>
-                Was coming, and not only a night, an age.<br/>
-                Someone had better be prepared for rage.<br/>
-                There would be more than ocean-water broken<br/>
-                Before God's last Put out the light was spoken.<br/>
-                <em>Robert Frost</em>
-            </p>
-        <?php } else { ?>
-            <p>
-                The shattered water made a misty din.<br/>
-                Great waves looked over others coming in,<br/>
-                And thought of doing something to the shore<br/>
-                That water never did to land before.<br/>
-                The clouds were low and hairy in the skies,<br/>
-                Like locks blown forward in the gleam of eyes.<br/>
-                You could not tell, and yet it looked as if<br/>
-                The shore was lucky in being backed by cliff,<br/>
-                The cliff in being backed by continent;<br/>
-                It looked as if a night of dark intent<br/>
-                Was coming, and not only a night, an age.<br/>
-                Someone had better be prepared for rage.<br/>
-                There would be more than ocean-water broken<br/>
-                Before God's last Put out the light was spoken.<br/>
-                <em>Robert Frost</em>
-            </p>
-        <?php } ?>
+        <h1 class="text-muted" id="content">Headline</h1>
     </div>
 
-    <!--    <div class="row marketing">-->
-    <!--        <div class="col-md-6 col-xs-12">-->
-    <!--            <picture>-->
-    <!--                <source media="(min-width: 45em)" srcset="img/large.jpg">-->
-    <!--                <source media="(min-width: 32em)" srcset="img/med.jpg">-->
-    <!--                <img src="img/small.jpg" alt="Rembrandt" class="img img-responsive">-->
-    <!--            </picture>-->
-    <!--        </div>-->
-    <!--        <div class="col-md-6 col-xs-12">-->
-    <!---->
-    <!--        </div>-->
-    <!--    </div>-->
+<!---->
+<!--   <div class="jumbotron">-->
+<!---->
+<!--        --><?php //if (@$details->country === "NO") { ?>
+<!--            <p>-->
+<!--                Robbestad.com-->
+<!--            </p>-->
+<!--        --><?php //} else { ?>
+<!--            <p>-->
+<!--                Robbestad.com-->
+<!--            </p>-->
+<!--        --><?php //} ?>
+<!--    </div>-->
 
-    <div id="footer">
+    <div class="row">
+      <div class="col-md-3 col-xs-2 hidden-xs sidebar">
+          <?php foreach($data["_embedded"]["robbestad"] as $item){
+              echo '<h2>'.($item["title"].'</h2><hr>');
+          }
+          ?>
 
-        &copy; <?php echo date("Y"); ?> - Sven A Robbestad - <a
-            href="<?php echo $json["repository"]["url"]; ?>">source</a>
+      </div>
+      <div class="article col-sm-8 col-md-8 col-xs-12" >
+          <?php
+          echo $data["_embedded"]["robbestad"][0]["content"];
+
+        ?>
+<!--          <div id="blogdata"></div>-->
     </div>
-
+        <div class="right-sidebar col-sm-1 col-md-1 hidden-xs" >
+Ida Alana
+            </div>
 </div>
 <!-- /div.container -->
 
+<div id="myfooter"></div>
 </body>
 <!-- Contains jQuery, React and compiled js (included jsx) -->
 <script type="text/javascript" src="./js/libs.min.js"></script>
 <script type="text/javascript" src="./js/app.js"></script>
+<script type="text/javascript" src="./js/blogdata.min.js"></script>

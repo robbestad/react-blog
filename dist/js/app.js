@@ -9,12 +9,20 @@ window.React = React;
 var MyComponent = require('./components/mycomponent.jsx');
 var FastSin = require('./components/fastsin.jsx');
 var Background = require('./components/background.jsx');
+var Masthead = require('./components/masthead.jsx');
+var BlogData = require('./components/blogdata.jsx');
+var Footer = require('./components/footer.jsx');
+var Sidebar = require('./components/sidebar.jsx');
 
 React.renderComponent(MyComponent(null), document.getElementById('content'));
 /*React.renderComponent(<FastSin />, document.getElementById('fastsin'));*/
-React.renderComponent(Background(null), document.getElementById('background'));
+/*React.renderComponent(<Background />, document.getElementById('background'));*/
+React.renderComponent(Masthead({myTitle: "Robbestad.com"}), document.getElementById('masthead'));
+//React.renderComponent(<BlogData />, document.getElementById('blogdata'));
+React.renderComponent(Footer(null), document.getElementById('myfooter'));
+//React.renderComponent(<Sidebar />, document.getElementById('sidebar'));
 
-},{"./components/background.jsx":147,"./components/fastsin.jsx":148,"./components/mycomponent.jsx":149,"react":146}],2:[function(require,module,exports){
+},{"./components/background.jsx":147,"./components/blogdata.jsx":148,"./components/fastsin.jsx":149,"./components/footer.jsx":150,"./components/masthead.jsx":151,"./components/mycomponent.jsx":152,"./components/sidebar.jsx":153,"react":146}],2:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -18677,8 +18685,19 @@ module.exports = require('./lib/React');
     'use strict';
 })();
 
-var React = require('react'),
 
+var SetIntervalMixin = {
+    componentWillMount: function() {
+        this.intervals = [];
+    },
+    setInterval: function() {
+        this.intervals.push(setInterval.apply(null, arguments));
+    },
+    componentWillUnmount: function() {
+        this.intervals.map(clearInterval);
+    }
+};
+var React = require('react'),
 
 Background = React.createClass({displayName: 'Background',
     getInitialState: function () {
@@ -18686,14 +18705,29 @@ Background = React.createClass({displayName: 'Background',
             opacity:1.0
         }
     },
+        mixins: [SetIntervalMixin], // Use the mixin
+    componentDidMount: function() {
+        this.setInterval(this.tick, 1); // Call a method on the mixin
+    },
+
    componentWillMount: function (props, state) {
     document.addEventListener('mousemove', this.onMouseMove);
     document.addEventListener('touchmove', this.onMouseMove);
    },
-    onMouseMove: function (e) {
-      if(this.state.opacity>0)
-        this.setState({opacity:this.state.opacity-0.01})
+       tick: function() {
+        var scrollTop = (window.pageYOffset !== undefined) ? window.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop;
+        var width=document.body.clientWidth;
+        this.setProps({scrollTop: -scrollTop, logoTop:scrollTop/1.75, width: width});
+/*        console.log(scrollTop);*/
+      //if(this.state.opacity>0)
+          this.setState({opacity:scrollTop/1000})
+
     },
+
+    onMouseMove: function (e) {
+/*      if(this.state.opacity>0)
+        this.setState({opacity:this.state.opacity-0.09})
+*/    },
     render: function () {
         var myStyle= {
         width: window.outerWidth,
@@ -18712,6 +18746,72 @@ Background = React.createClass({displayName: 'Background',
 module.exports = Background;
 
 },{"react":146}],148:[function(require,module,exports){
+/**
+ * @jsx React.DOM
+ */
+var SetIntervalMixin = {
+    componentWillMount: function() {
+        this.intervals = [];
+    },
+    setInterval: function() {
+        this.intervals.push(setInterval.apply(null, arguments));
+    },
+    componentWillUnmount: function() {
+        this.intervals.map(clearInterval);
+    }
+};
+
+var BlogData = React.createClass({displayName: 'BlogData',
+    mixins: [SetIntervalMixin], // Use the mixin
+    componentDidMount: function() {
+        this.setInterval(this.tick, 200); // Call a method on the mixin
+        this.fetchBlogData();
+    },
+    tick: function() {
+      //this.fetchBlogData();
+        if('undefined' !== typeof this.refs.blogdata.getDOMNode())
+            console.log(this.refs.blogdata.getDOMNode().style.innerHeight);
+    },
+    setInitialProps: function(){
+      blogData: false
+    },
+    setData:function(data){
+     // console.log(data);
+    },
+    fetchBlogData: function(){
+      var react = this;
+      $.ajax({
+        url: "http://api.robbestad.com/robbestad",
+        crossDomain:true,
+        dataType: "json",
+        success:function(data,text,xhqr){
+            $.each(data, function(i, item) {
+              if("object" === typeof item["robbestad"] ){
+                react.setProps({ blogData: item["robbestad"]});
+              }
+            });
+        }
+      });
+
+    },
+    render: function () {
+        if(undefined === this.props.blogData) return(React.DOM.div(null, "Loading"));
+        // console.log(this.props.blogData)
+        var results = this.props.blogData;
+        return (React.DOM.div({ref: "blogdata"}, 
+                   results.map(function(result) {
+                      return React.DOM.div({key: result.id}, result.title, 
+                      React.DOM.p({key: result.id}, result.content)
+                       )
+                    })
+                )
+           );
+    }
+});
+
+module.exports = BlogData;
+
+},{}],149:[function(require,module,exports){
 /** @jsx React.DOM */
 
 (function(){
@@ -18898,7 +18998,130 @@ var React = require('react'),
 
 module.exports = FastSin;
 
-},{"react":146}],149:[function(require,module,exports){
+},{"react":146}],150:[function(require,module,exports){
+/**
+ * @jsx React.DOM
+ */
+(function(){
+    'use strict';
+})();
+
+var React = require('react'),
+    Footer = React.createClass({displayName: 'Footer',
+    getInitialState: function(){
+      return { windowHeight:$("#blogdata").height()};
+    },
+    componentDidUpdate: function(){
+      this.setState({windowHeight:$("#blogdata").height()})
+    },
+    render: function() {
+        var windowHeight = 'undefined' !== this.state.windowHeight ?
+            this.state.windowHeight : $("#blogdata").height();
+        var footerStyle = {
+          position:'fixed',
+          bottom:'0px',
+          backgroundColor:'#f5f5f5',
+          width:'100%',
+          height:'35px',
+          fontSize:'1.3rem',
+          textAlign:'center',
+          padding:'15px 10px 0 20px',
+          marginTop:'35px',
+            marginLeft:'-15px'
+    }
+    return (
+       React.DOM.div({ref: "footer", style: footerStyle}, "©" + ' ' +
+       "Sven Anders Robbestad - 2014 -", 
+       React.DOM.a({href: "https://github.com/svenanders/react-fullscreen"}, "Source"))
+      )
+    }
+});
+
+module.exports = Footer;
+
+},{"react":146}],151:[function(require,module,exports){
+/** @jsx React.DOM */
+
+(function(){
+    'use strict';
+})();
+
+var SetIntervalMixin = {
+    componentWillMount: function() {
+        this.intervals = [];
+    },
+    setInterval: function() {
+        this.intervals.push(setInterval.apply(null, arguments));
+    },
+    componentWillUnmount: function() {
+        this.intervals.map(clearInterval);
+    }
+};
+var React = require('react'),
+
+  Masthead = React.createClass({displayName: 'Masthead',
+    mixins: [SetIntervalMixin], // Use the mixin
+    componentDidMount: function() {
+        this.setInterval(this.tick, 20); // Call a method on the mixin
+    },
+    tick: function() {
+        var scrollTop = (window.pageYOffset !== undefined) ?
+        window.pageYOffset : (document.documentElement
+            || document.body.parentNode || document.body).scrollTop,
+            width=document.body.clientWidth;
+
+        var dontShowVal;
+        if(this.refs.masthead.getDOMNode().style.opacity <= 0
+            && scrollTop > 0){
+            dontShowVal=true;
+        } else dontShowVal = this.props.dontShow;
+
+        this.setProps({scrollTop: -scrollTop, logoTop:scrollTop/1.75,
+            width: width, dontShow:dontShowVal});
+
+    },
+    render: function() {
+        var reducify=40;
+        var modifier = Math.abs(this.props.scrollTop/reducify);
+        var opacity = 1-modifier > 0 ? 1-modifier : 0;
+        opacity = this.props.scrollTop > 0 ? 1 : opacity;
+        if(this.props.dontShow === true){
+            opacity=0;
+        }
+        var z = opacity > 0.0 ? 90 : -1;
+
+        var divStyle= {
+            position: 'fixed',
+            top: this.props.scrollTop,
+            left: '0',
+            top: '0',
+            width: '100%',
+            width: window.outerWidth,
+            height: window.outerHeight,
+            background: 'transparent',
+            background: 'url(img/bg.png) repeat 50% 50%',
+            backgroundSize:'cover',
+            transform: 'translateZ(0) scale(1)',
+            zIndex: z,
+            opacity: opacity,
+            textAlign: 'center'
+        }
+        var logoStyle = {
+            top: ((window.innerHeight/2)-100)+"px",
+            color: 'white',
+            fontSize: '7rem',
+            left: ((window.outerWidth/2)-(this.props.myTitle.length)*17)+"px",
+            position: 'fixed'
+        }
+      return (React.DOM.div({ref: "masthead", style: divStyle}, 
+        React.DOM.h1({className: "animated zoomIn", style: logoStyle}, this.props.myTitle)
+        ))
+    }
+});
+
+module.exports = Masthead;
+
+},{"react":146}],152:[function(require,module,exports){
 /** @jsx React.DOM */
 
 'use strict';
@@ -18908,11 +19131,45 @@ var React = require('react'),
     Mycomponent = React.createClass({displayName: 'Mycomponent',
       render: function() {
         return (
-          React.DOM.h1({className: "Mycomponent"}, "Sine")
+          React.DOM.h1({className: "Mycomponent"}, "Robbestad.com")
         )
       }
     });
 
 module.exports = Mycomponent;
+
+},{"react":146}],153:[function(require,module,exports){
+/**
+ * @jsx React.DOM
+ */
+
+(function(){
+    'use strict';
+})();
+
+var React = require('react'),
+    Sidebar = React.createClass({displayName: 'Sidebar',
+    getInitialState: function(){
+      return { windowHeight:window.outerHeight };
+    },
+    componentDidUpdate: function(){
+      this.setState({windowHeight:window.outerHeight})
+    },
+    render: function() {
+        var windowHeight = 'undefined' !== this.state.windowHeight ?
+            this.state.windowHeight : window.outerHeight;
+        var sidebarStyle = {
+          background: 'none repeat scroll 0% 0% #D6EDFF',
+          height:'100%'
+    }
+    return (
+       React.DOM.div({ref: "sidebar", style: sidebarStyle}
+
+       )
+      )
+    }
+});
+
+module.exports = Sidebar;
 
 },{"react":146}]},{},[1]);
