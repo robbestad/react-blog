@@ -19077,6 +19077,8 @@ var React = require('react'),
             dontShowVal=true;
         } else if(window.location.hash==="#nosplash"){
             dontShowVal=true;
+        } else if(window.innerWidth<640){
+            dontShowVal=true;
         }
         else dontShowVal = this.props.dontShow;
 
@@ -19096,16 +19098,16 @@ var React = require('react'),
 
         var divStyle= {
             position: 'fixed',
-            top: this.props.scrollTop,
+            //top: this.props.scrollTop,
             left: '0',
             top: '0',
-            width: '100%',
+            //width: '100%',
             width: window.outerWidth,
             height: window.outerHeight,
-            background: 'transparent',
+            //background: 'transparent',
             background: 'url(img/bg.png) repeat 50% 50%',
             backgroundSize:'cover',
-            fontFamily:'Lobster',
+            fontFamily:'Arial, Verdana, sans-serif',
             transform: 'translateZ(0) scale(1)',
             zIndex: z,
             opacity: opacity,
@@ -19115,11 +19117,11 @@ var React = require('react'),
             top: ((window.innerHeight/2)-100)+"px",
             color: 'white',
             fontSize: '7rem',
-            left: ((window.outerWidth/2)-(this.props.myTitle.length)*16)+"px",
+            left: (window.outerWidth/2)-(567/2)+"px",
             position: 'fixed'
         }
       return (React.DOM.div({ref: "masthead", style: divStyle}, 
-        React.DOM.h1({className: "animated zoomIn", style: logoStyle}, this.props.myTitle)
+        React.DOM.div({className: "animated zoomIn", style: logoStyle}, React.DOM.img({src: "img/robcom.png"}))
         ))
     }
 });

@@ -104,7 +104,7 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
     </div>
 
     <div class="row">
-        <div class="col-md-3 col-xs-2 hidden-xs sidebar">
+        <div class="col-md-3 col-sm-4 col-lg-3 hidden-xs sidebar">
             <?php foreach ($data["_embedded"]["robbestad"] as $item) {
                 echo '<h2><a
                     href="/index.php?id=' . $item["id"] . '#nosplash">' . ($item["title"] . '</a></h2><hr>');
@@ -112,8 +112,7 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
             ?>
 
         </div>
-        <div class="article col-sm-8 col-md-8 col-xs-12">
-
+        <div class="article col-sm-8 col-md-9 col-lg-10 col-xs-12">
             <?php echo $data["_embedded"]["robbestad"][$articleNumber]["content"]; ?>
             <div id="disqus_thread"></div>
             <script type="text/javascript">
@@ -133,12 +132,7 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
                     Disqus.</a></noscript>
             <a href="http://disqus.com" class="dsq-brlink">comments powered by <span
                     class="logo-disqus">Disqus</span></a>
-
-
             <!--          <div id="blogdata"></div>-->
-        </div>
-        <div class="right-sidebar col-sm-1 col-md-1 hidden-xs">
-
         </div>
     </div>
     <!-- /div.container -->

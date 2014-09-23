@@ -44,9 +44,9 @@ a{
 }
 .article{
   background-color: white;
-  padding: 5px 10px 10px 10px;
-  border-radius: 10px;
-  margin-bottom: 50px;
+  padding: 10px 10px 10px 20px;
+  border-radius: 5px 0 0 0;
+  margin-bottom: 30px;
 }
 
 .singlearticle{
@@ -66,8 +66,8 @@ a{
   .article{
     background-color: white;
     padding: 5px 10px 10px 10px;
-    border-radius: 0px;
-    margin-bottom: 35px;
+    border-radius: 0 0 0 0;
+    margin-bottom: 30px;
     overflow: hidden;
   }
   body{
