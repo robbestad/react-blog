@@ -73,7 +73,7 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
     <meta http-equiv='Content-type' content='text/html; charset=utf-8'>
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="description" content="<?php echo $json["name"]; ?> <?php echo $json["version"]; ?>">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="format-detection" content="telephone=no">
@@ -86,12 +86,26 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
 
+    <script src="//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js"></script>
+    <script>
+        WebFont.load({
+            google: {
+                families: ['Lobster','Open Sans']
+            }
+        });
+    </script>
+
 </head>
 <body>
 
+
+<div id="layout"></div>
 <div id="masthead"></div>
-<div class="container-fluid">
-    <div class="header">
+
+<div class="container-fluid" >
+    <div id="react-root"></div>
+
+    <div class="header hidden-xs">
         <ul class="nav nav-pills pull-right">
             <li class="active"><a href="/index.php"><?php echo $l_hjem; ?></a></li>
             <li><a href="http://www.robbestad.com"><?php echo $l_om; ?></a></li>
@@ -113,8 +127,10 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
         </div>
         <div class="article col-sm-8 col-md-9 col-lg-10 col-xs-12">
 
-            <div class="article col-sm-12 col-md-11 col-lg-11 col-xs-12 ">
                 <div class="innerXsPadding">
+
+
+                    <h1><?php echo $data["_embedded"]["robbestad"][$articleNumber]["title"]; ?></h1>
 
             <?php echo $data["_embedded"]["robbestad"][$articleNumber]["content"]; ?>
             <div id="disqus_thread"></div>
@@ -138,13 +154,18 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
             <!--          <div id="blogdata"></div>-->
         </div>
         </div>
-        </div>
     </div>
     <!-- /div.container -->
 
     <div id="myfooter"></div>
 </body>
+
+<!-- Zynga Scroller -->
+<script type="text/javascript" src="http://zynga.github.io/scroller/src/Raf.js"></script>
+<script type="text/javascript" src="http://zynga.github.io/scroller/src/Animate.js"></script>
+<script type="text/javascript" src="http://zynga.github.io/scroller/src/Scroller.js"></script>
+
 <!-- Contains jQuery, React and compiled js (included jsx) -->
 <script type="text/javascript" src="./js/libs.min.js"></script>
 <script type="text/javascript" src="./js/app.js"></script>
-<script type="text/javascript" src="./js/blogdata.min.js"></script>
+<!--<script type="text/javascript" src="./js/blogdata.min.js"></script>-->
