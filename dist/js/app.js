@@ -19580,7 +19580,7 @@ var Menu = React.createClass({displayName: 'Menu',
                     React.DOM.li({style: liStyle, className: "hidden-lg"}, 
                         React.DOM.div({onClick: this.toggleNavClick, className: "Layout-hamburger fa fa-bars"})
                     ), 
-                    React.DOM.li({lassName: "hidden-xs hidden-sm", style: liStyle}, 
+                    React.DOM.li({className: "hidden-xs hidden-sm", style: liStyle}, 
                         React.DOM.div({onTouchStart: this.toggleNavClick, className: "Layout-hamburger2 fa fa-bars"})
                     ), 
                     React.DOM.li({style: liStyle}, React.DOM.div(null, navOpen)
