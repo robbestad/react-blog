@@ -342,7 +342,7 @@ var LeftNavContainer = React.createClass({displayName: 'LeftNavContainer',
 });
 
 module.exports = LeftNavContainer;
-},{"../../environment/ZyngaScroller":5,"../../primitives/AnimatableContainer":8,"../../primitives/TouchableArea":10,"./LeftNavBehaviors":6,"react":159}],8:[function(require,module,exports){
+},{"../../environment/ZyngaScroller":5,"../../primitives/AnimatableContainer":8,"../../primitives/TouchableArea":9,"./LeftNavBehaviors":6,"react":159}],8:[function(require,module,exports){
 /** @jsx React.DOM */
 
 var React = require('react');
@@ -477,36 +477,7 @@ var AnimatableContainer = React.createClass({displayName: 'AnimatableContainer',
 });
 
 module.exports = AnimatableContainer;
-},{"../environment/StyleKeys":4,"./helpers/StaticContainer":11,"react":159}],9:[function(require,module,exports){
-/** @jsx React.DOM */
-
-var React = require('react');
-
-var STYLE = {
-  bottom: 0,
-  left: 0,
-  position: 'fixed',
-  right: 0,
-  top: 0,
-  overflow:'hidden'
-};
-
-var App = React.createClass({displayName: 'App',
-  handleTouch: function(e) {
-    e.preventDefault();
-  },
-
-  render: function() {
-    return this.transferPropsTo(
-      React.DOM.div( {onTouchMove:this.handleTouch, style:STYLE}, 
-        this.props.children
-      )
-    );
-  }
-});
-
-module.exports = App;
-},{"react":159}],10:[function(require,module,exports){
+},{"../environment/StyleKeys":4,"./helpers/StaticContainer":10,"react":159}],9:[function(require,module,exports){
 /** @jsx React.DOM */
 
 var React = require('react');
@@ -578,7 +549,7 @@ var TouchableArea = React.createClass({displayName: 'TouchableArea',
 });
 
 module.exports = TouchableArea;
-},{"../thirdparty/TouchEventUtils":15,"react":159}],11:[function(require,module,exports){
+},{"../thirdparty/TouchEventUtils":15,"react":159}],10:[function(require,module,exports){
 /** @jsx React.DOM */
 
 var React = require('react');
@@ -598,7 +569,36 @@ var StaticContainer = React.createClass({displayName: 'StaticContainer',
 });
 
 module.exports = StaticContainer;
-},{"react":159}],12:[function(require,module,exports){
+},{"react":159}],11:[function(require,module,exports){
+/** @jsx React.DOM */
+
+var React = require('react');
+
+var Router = require('./Router');
+
+var RoutedLink = React.createClass({displayName: 'RoutedLink',
+  handleTap: function(e) {
+    Router.trigger(this.props.href);
+
+    if (this.props.onClick) {
+      this.props.onClick(e);
+    }
+    e.preventDefault();
+  },
+
+  render: function() {
+    var linkProps = {};
+    for (var key in this.props) {
+      linkProps[key] = this.props[key];
+    }
+    linkProps.href = 'javascript:;';
+    linkProps.onTouchTap = this.handleTap;
+    return React.DOM.a(linkProps, this.props.children);
+  }
+});
+
+module.exports = RoutedLink;
+},{"./Router":12,"react":159}],12:[function(require,module,exports){
 var React = require('react');
 
 var componentClass = null;
@@ -20181,25 +20181,9 @@ module.exports = Footer;
 (function () {
     'use strict';
 })();
+
 var ReactTouch = require('react-touch');
-//var FPSCounter = require('react-touch/lib/environment/FPSCounter');
-//var RoutedLink = require('react-touch/lib/routing/RoutedLink');
-var App = require('react-touch/lib/primitives/App');
-
-//var RootPage = require('../pages/RootPage.jsx');
-//var Message = require('../components/message.jsx');
-
-//FPSCounter.start();
-//ReactTouch.start(RootPage, document.getElementById('react-root'), {
-//    '/home': 'home',
-//    '/glass': 'news',
-//    '/innenriks' : 'innenriks',
-//    '/utenriks' : 'utenriks',
-//    '/sport' : 'sport',
-//    '/': 'home'
-//});
-
-
+var RoutedLink = require('react-touch/lib/routing/RoutedLink');
 var LeftNavContainer = require('react-touch/lib/interactions/leftnav/LeftNavContainer');
 var SIDEBAR_WIDTH = 242;
 var TOPBAR_HEIGHT = 51; // + 1 for the border
@@ -20224,11 +20208,7 @@ var Layout = React.createClass({displayName: 'Layout',
         );
         var sideContent = (
             React.DOM.div({className: "Layout-nav"}, 
-                React.DOM.a({href: "na.php#", className: "Layout-navLink", onClick: this.handleNavClick}, "Første linke"), 
-                RoutedLink({href: "/home", className: "Layout-navLink", onClick: this.handleNavClick}, "Hjem"), 
-                RoutedLink({href: "/innenriks", className: "Layout-navLink", onClick: this.handleNavClick}, "Innenriks"), 
-                RoutedLink({href: "/utenriks", className: "Layout-navLink", onClick: this.handleNavClick}, "Utenriks"), 
-                RoutedLink({href: "/sport", className: "Layout-navLink", onClick: this.handleNavClick}, "Sport")
+                React.DOM.a({href: "na.php#", className: "Layout-navLink", onClick: this.handleNavClick}, "Første lenke")
             )
         );
         return (
@@ -20255,7 +20235,7 @@ Layout.TOPBAR_HEIGHT = TOPBAR_HEIGHT; // account for border
 
 module.exports = Layout;
 
-},{"./Header.jsx":160,"react-touch":3,"react-touch/lib/interactions/leftnav/LeftNavContainer":7,"react-touch/lib/primitives/App":9}],166:[function(require,module,exports){
+},{"./Header.jsx":160,"react-touch":3,"react-touch/lib/interactions/leftnav/LeftNavContainer":7,"react-touch/lib/routing/RoutedLink":11}],166:[function(require,module,exports){
 /** @jsx React.DOM */
 
 (function(){
