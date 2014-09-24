@@ -18,7 +18,6 @@ var Layout = React.createClass({
     },
     toggleNavClick: function () {
         this.refs['leftNavContainer']._handleTap();
-        $("body").css("overflow","hidden");
     },
 
     render: function () {
