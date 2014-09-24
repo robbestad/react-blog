@@ -39,7 +39,7 @@ var Layout = React.createClass({
 
     render: function () {
         var button = (
-            <div onClick={this.toggleNavClick} onTouch={this.toggleNavClick} className="Layout-hamburger fa fa-bars" />
+            <div onClick={this.toggleNavClick} className="Layout-hamburger fa fa-bars" />
         );
 
         var topContent = (
