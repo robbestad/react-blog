@@ -19496,8 +19496,8 @@ var Menu = React.createClass({displayName: 'Menu',
             slider.css("top","40px");
             slider.css("zIndex","999");
             slider.animate({
-                height: (window.innerHeight-75)+"px",
-                width: window.outerWidth/2+"px"
+                height: ($("body").height()-75)+"px",
+                width: $("body").width()/2+"px"
             }, 200, function(){
                 // suksess
             });

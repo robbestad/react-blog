@@ -55,6 +55,7 @@ var Menu = React.createClass({
                     1:0
                 }
             });
+            
 
             var slider=$("#slider");
             slider.css("display","block");
