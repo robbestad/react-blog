@@ -425,7 +425,7 @@ var AnimatableContainer = React.createClass({displayName: 'AnimatableContainer',
 
     if (props.translate) {
       transforms += (
-        'translate3d(' + 0 + 'px, ' +
+        'translate3d(' + (props.translate.x || 0) + 'px, ' +
         (props.translate.y || 0) + 'px, ' +
         (props.translate.z || 0) + 'px) '
       );
@@ -20192,9 +20192,12 @@ var Header = require('./Header.jsx');
 var Layout = React.createClass({displayName: 'Layout',
     handleNavClick: function () {
         this.refs['leftNavContainer']._handleTap();
+
     },
     toggleNavClick: function () {
         this.refs['leftNavContainer']._handleTap();
+
+
     },
 
     render: function () {
