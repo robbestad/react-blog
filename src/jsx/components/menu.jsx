@@ -150,12 +150,12 @@ var Menu = React.createClass({
                     <li style={liStyle} className="hidden-lg">
                         <div onClick={this.toggleNavClick} className="Layout-hamburger fa fa-bars" />
                     </li>
-                    <li style={liStyle}>
+                    <li lassName="hidden-xs hidden-sm" style={liStyle}>
                         <div onTouchStart={this.toggleNavClick}  className="Layout-hamburger2 fa fa-bars" />
                     </li>
                     <li style={liStyle}><div>{navOpen}</div>
                     </li>
-                    <li className="hidden-xs" style={liStyle}>{Math.round(this.props.scrollTop*1.2)}
+                    <li className="hidden-lg" style={liStyle}>{Math.round(this.props.scrollTop*1.2)}
                     </li>
                 </ul>
             </div>
