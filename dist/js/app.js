@@ -128,14 +128,14 @@ var LeftNavBehaviors = {
     side: {
       translate: function(sideWidth, scrollLeft) {
         return {
-          x: sideWidth - .5 * scrollLeft
+          x: sideWidth - .75 * scrollLeft
         };
       },
       rotate: function() {
         return null;
       },
       opacity: function(sideWidth, scrollLeft) {
-        return .5 + .5 * (1 - scrollLeft / sideWidth);
+        return .75 + .75 * (1 - scrollLeft / sideWidth);
       }
     },
     top: {
@@ -239,7 +239,6 @@ var LeftNavContainer = React.createClass({displayName: 'LeftNavContainer',
     if (!this.isNavOpen()) {
       return;
     }
-
 
     this.scroller.scrollTo(this.props.sideWidth, 0, true);
     e.preventDefault();
@@ -20195,6 +20194,12 @@ var Layout = React.createClass({displayName: 'Layout',
         this.refs['leftNavContainer']._handleTap();
 
     },
+    getInitialState: function() {
+        return {
+            title: [],
+            id: []
+        };
+    },
     toggleNavClick: function () {
         this.refs['leftNavContainer']._handleTap();
         if(!this.refs['leftNavContainer'].isNavOpen()){
@@ -20217,8 +20222,41 @@ var Layout = React.createClass({displayName: 'Layout',
             window.scrollTo(scrollPosition[0], scrollPosition[1])
         }
     },
+    componentDidMount: function(){
+        this.getTitlesAndLinks();
+    },
+    getTitlesAndLinks: function(){
+        var react = this;
+        $.getJSON( "http://api.robbestad.com/robbestad", function( data ) {
+            var titles=[];
+            var ids=[];
+            $.each(data, function (key, val) {
+                if ("object" === typeof val["robbestad"]) {
+                    for (var i = 0; i < val["robbestad"].length; i++) {
+                        titles.push(val["robbestad"][i].title);
+                        ids.push(val["robbestad"][i].id);
+                    }
+                }
+            });
+            react.setState({
+                title: titles,
+                id: ids
+            });
+        });
+    },
+
 
     render: function () {
+        var content=[];
+        //console.log(this.state.title[0])
+        for (var i = 0; i < this.state.title.length; i++) {
+            content.push(React.DOM.a({key: i, className: "Layout-navLink", onClick: this.handleNavClick, 
+            href: 'index.php?id='+ this.state.id[i]+'#nosplash'
+            }, 
+                 this.state.title[i]
+                 ));
+        }
+
         var button = (
             React.DOM.div({onClick: this.toggleNavClick, className: "Layout-hamburger fa fa-bars"})
         );
@@ -20226,9 +20264,11 @@ var Layout = React.createClass({displayName: 'Layout',
         var topContent = (
             Header({className: "Layout-topBar"}, "Robbestad.com")
         );
+
+
         var sideContent = (
             React.DOM.div({className: "Layout-nav"}, 
-                React.DOM.a({href: "na.php#", className: "Layout-navLink", onClick: this.handleNavClick}, "Første lenke")
+                content
             )
         );
         return (

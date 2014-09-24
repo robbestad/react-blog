@@ -17,6 +17,12 @@ var Layout = React.createClass({
         this.refs['leftNavContainer']._handleTap();
 
     },
+    getInitialState: function() {
+        return {
+            title: [],
+            id: []
+        };
+    },
     toggleNavClick: function () {
         this.refs['leftNavContainer']._handleTap();
         if(!this.refs['leftNavContainer'].isNavOpen()){
@@ -39,8 +45,41 @@ var Layout = React.createClass({
             window.scrollTo(scrollPosition[0], scrollPosition[1])
         }
     },
+    componentDidMount: function(){
+        this.getTitlesAndLinks();
+    },
+    getTitlesAndLinks: function(){
+        var react = this;
+        $.getJSON( "http://api.robbestad.com/robbestad", function( data ) {
+            var titles=[];
+            var ids=[];
+            $.each(data, function (key, val) {
+                if ("object" === typeof val["robbestad"]) {
+                    for (var i = 0; i < val["robbestad"].length; i++) {
+                        titles.push(val["robbestad"][i].title);
+                        ids.push(val["robbestad"][i].id);
+                    }
+                }
+            });
+            react.setState({
+                title: titles,
+                id: ids
+            });
+        });
+    },
+
 
     render: function () {
+        var content=[];
+        //console.log(this.state.title[0])
+        for (var i = 0; i < this.state.title.length; i++) {
+            content.push(<a key={i} className="Layout-navLink" onClick={this.handleNavClick}
+            href={'index.php?id='+ this.state.id[i]+'#nosplash'}
+            >
+                 {this.state.title[i]}
+                 </a>);
+        }
+
         var button = (
             <div onClick={this.toggleNavClick} className="Layout-hamburger fa fa-bars" />
         );
@@ -48,9 +87,11 @@ var Layout = React.createClass({
         var topContent = (
             <Header className="Layout-topBar">Robbestad.com</Header>
         );
+
+
         var sideContent = (
             <div className="Layout-nav">
-                <a href="na.php#" className="Layout-navLink" onClick={this.handleNavClick}>Første lenke</a>
+                {content}
             </div>
         );
         return (
