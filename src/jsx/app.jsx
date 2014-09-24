@@ -17,10 +17,6 @@ var Sidebar = require('./components/sidebar.jsx');
 var Layout = require('./components/layout.jsx');
 
 React.renderComponent(<MyComponent />, document.getElementById('content'));
-/*React.renderComponent(<FastSin />, document.getElementById('fastsin'));*/
-/*React.renderComponent(<Background />, document.getElementById('background'));*/
 React.renderComponent(<Masthead myTitle="Robbestad.com" />, document.getElementById('masthead'));
-//React.renderComponent(<BlogData />, document.getElementById('blogdata'));
 React.renderComponent(<Footer />, document.getElementById('myfooter'));
 React.renderComponent(<Layout />, document.getElementById('layout'));
-//React.renderComponent(<Sidebar />, document.getElementById('sidebar'));

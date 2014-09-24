@@ -1,25 +1,26 @@
 /**
  * @jsx React.DOM
  */
-(function(){
+(function () {
     'use strict';
 })();
 var ReactTouch = require('react-touch');
 //var FPSCounter = require('react-touch/lib/environment/FPSCounter');
 var RoutedLink = require('react-touch/lib/routing/RoutedLink');
+var App = require('react-touch/lib/primitives/App');
 
-var RootPage = require('../pages/RootPage.jsx');
-var Message = require('../components/message.jsx');
+//var RootPage = require('../pages/RootPage.jsx');
+//var Message = require('../components/message.jsx');
 
 //FPSCounter.start();
-ReactTouch.start(RootPage, document.getElementById('react-root'), {
-    '/home': 'home',
-    '/glass': 'news',
-    '/innenriks' : 'innenriks',
-    '/utenriks' : 'utenriks',
-    '/sport' : 'sport',
-    '/': 'home'
-});
+//ReactTouch.start(RootPage, document.getElementById('react-root'), {
+//    '/home': 'home',
+//    '/glass': 'news',
+//    '/innenriks' : 'innenriks',
+//    '/utenriks' : 'utenriks',
+//    '/sport' : 'sport',
+//    '/': 'home'
+//});
 
 
 var LeftNavContainer = require('react-touch/lib/interactions/leftnav/LeftNavContainer');
@@ -28,14 +29,17 @@ var TOPBAR_HEIGHT = 51; // + 1 for the border
 var Header = require('./Header.jsx');
 
 var Layout = React.createClass({
-    handleNavClick: function() {
-        //console.log('closing LeftNavContainer');
+    handleNavClick: function () {
         this.refs['leftNavContainer'].closeNav();
     },
+    toggleNavClick: function () {
+        this.refs['leftNavContainer']._handleTap();
+        $("body").css("overflow","hidden");
+    },
 
-    render: function() {
+    render: function () {
         var button = (
-            <div className="Layout-hamburger fa fa-bars" />
+            <div onClick={this.toggleNavClick} className="Layout-hamburger fa fa-bars" />
         );
 
         var topContent = (
@@ -43,6 +47,7 @@ var Layout = React.createClass({
         );
         var sideContent = (
             <div className="Layout-nav">
+                <a href="na.php#" className="Layout-navLink" onClick={this.handleNavClick}>Første linke</a>
                 <RoutedLink href="/home" className="Layout-navLink" onClick={this.handleNavClick}>Hjem</RoutedLink>
                 <RoutedLink href="/innenriks" className="Layout-navLink" onClick={this.handleNavClick}>Innenriks</RoutedLink>
                 <RoutedLink href="/utenriks" className="Layout-navLink" onClick={this.handleNavClick}>Utenriks</RoutedLink>
@@ -50,40 +55,23 @@ var Layout = React.createClass({
             </div>
         );
         return (
-            <div className="1hidden-md 1hidden-sm hidden-lg">
-                <LeftNavContainer
-                ref="leftNavContainer"
-                button={button}
-                topContent={topContent}
-                sideContent={sideContent}
+            <div className="hidden-md hidden-sm hidden-lg">
+                    <LeftNavContainer
+                    ref="leftNavContainer"
+                    button={button}
+                    topContent={topContent}
+                    sideContent={sideContent}
 
-                topHeight={TOPBAR_HEIGHT}
-                sideWidth={SIDEBAR_WIDTH}>
-                    <div className="Layout-content">
+                    topHeight={TOPBAR_HEIGHT}
+                    sideWidth={SIDEBAR_WIDTH}>
+                        <div className="Layout-content">
                     {this.props.children}
-                    </div>
-                </LeftNavContainer>
-             </div>
+                        </div>
+                    </LeftNavContainer>
+            </div>
         )
-        }
-    /*
-    return this.transferPropsTo(
-            <App>
-                <LeftNavContainer
-                ref="leftNavContainer"
-                button={button}
-                topContent={topContent}
-                sideContent={sideContent}
-                topHeight={TOPBAR_HEIGHT}
-                sideWidth={SIDEBAR_WIDTH}>
-                    <div className="Layout-content">
-            {this.props.children}
-                    </div>
-                </LeftNavContainer>
-            </App>
-        );
     }
-    */
+
 });
 
 Layout.TOPBAR_HEIGHT = TOPBAR_HEIGHT; // account for border
