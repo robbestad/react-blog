@@ -6,7 +6,7 @@
 })();
 var ReactTouch = require('react-touch');
 //var FPSCounter = require('react-touch/lib/environment/FPSCounter');
-var RoutedLink = require('react-touch/lib/routing/RoutedLink');
+//var RoutedLink = require('react-touch/lib/routing/RoutedLink');
 var App = require('react-touch/lib/primitives/App');
 
 //var RootPage = require('../pages/RootPage.jsx');
@@ -39,7 +39,7 @@ var Layout = React.createClass({
 
     render: function () {
         var button = (
-            <div onClick={this.toggleNavClick} className="Layout-hamburger fa fa-bars" />
+            <div onClick={this.toggleNavClick} onTouch={this.toggleNavClick} className="Layout-hamburger fa fa-bars" />
         );
 
         var topContent = (
