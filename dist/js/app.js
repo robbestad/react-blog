@@ -19433,6 +19433,7 @@ module.exports = Masthead;
  */
 'use strict';
 
+React.initializeTouchEvents(true);
 
 var SetIntervalMixin = {
     componentWillMount: function() {
@@ -19577,7 +19578,7 @@ var Menu = React.createClass({displayName: 'Menu',
             React.DOM.div(null, 
                 React.DOM.ul({style: ulStyle}, 
                     React.DOM.li({style: liStyle}, 
-                        React.DOM.div({onClick: this.toggleNavClick, className: "Layout-hamburger fa fa-bars"})
+                        React.DOM.div({onClick: this.toggleNavClick, onTouch: this.toggleNavClick, className: "Layout-hamburger fa fa-bars"})
                     ), 
                     React.DOM.li({style: liStyle}, React.DOM.div(null, navOpen)
                     ), 
