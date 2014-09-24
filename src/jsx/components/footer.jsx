@@ -17,15 +17,16 @@ var React = require('react'),
         var windowHeight = 'undefined' !== this.state.windowHeight ?
             this.state.windowHeight : $("#blogdata").height();
         var footerStyle = {
-          position:'fixed',
-          bottom:'0px',
-          backgroundColor:'#f5f5f5',
-          width:'100%',
-          height:'35px',
-          fontSize:'1.3rem',
-          textAlign:'center',
-          padding:'15px 10px 0 20px',
-          marginTop:'35px',
+            position:'fixed',
+            bottom:'0px',
+            backgroundColor:'#f5f5f5',
+            width:'100%',
+            height:'35px',
+            fontSize:'1.3rem',
+            textAlign:'center',
+            padding:'15px 10px 0 20px',
+            marginTop:'35px',
+            zIndex:'999',
             marginLeft:'-15px'
     }
     return (

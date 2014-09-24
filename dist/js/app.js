@@ -19319,15 +19319,16 @@ var React = require('react'),
         var windowHeight = 'undefined' !== this.state.windowHeight ?
             this.state.windowHeight : $("#blogdata").height();
         var footerStyle = {
-          position:'fixed',
-          bottom:'0px',
-          backgroundColor:'#f5f5f5',
-          width:'100%',
-          height:'35px',
-          fontSize:'1.3rem',
-          textAlign:'center',
-          padding:'15px 10px 0 20px',
-          marginTop:'35px',
+            position:'fixed',
+            bottom:'0px',
+            backgroundColor:'#f5f5f5',
+            width:'100%',
+            height:'35px',
+            fontSize:'1.3rem',
+            textAlign:'center',
+            padding:'15px 10px 0 20px',
+            marginTop:'35px',
+            zIndex:'999',
             marginLeft:'-15px'
     }
     return (
@@ -19485,8 +19486,30 @@ var Menu = React.createClass({displayName: 'Menu',
                     1:0
                 }
             });
+            $("body").css("overflow","hidden")
+
+            var width = $("body").width() <= 320 ? 320 : $("body").width()/2;
+
 
             var slider=$("#slider");
+            slider.html("<ul class='slider'>" +
+                "<li><h3>MENU</h3></li>"+
+                "<li><input type='text' placeholder='Search' value=''></li>"+
+                "<li>Link 2...</li>"+
+                "<li>Link 3...</li>"+
+                "<li>Link 4...</li>"+
+                "<li>Link 5...</li>"+
+                "<li>Link 6...</li>"+
+                "<li>Link 7...</li>"+
+                "<li>Link 8...</li>"+
+                "<li>Link 9...</li>"+
+                "<li>Link 10...</li>"+
+                "<li>Link 11...</li>"+
+                "<li>Link 12...</li>"+
+                "<li>Link 13...</li>"+
+                "<li>Link 14...</li>"+
+                "<li>Link 15...</li>"+
+            "</ul>");
             slider.css("display","block");
             slider.css("backgroundColor","#e0e0e0");
             slider.css("height","0px");
@@ -19494,11 +19517,11 @@ var Menu = React.createClass({displayName: 'Menu',
             slider.css("position","fixed");
             slider.css("left","0");
             slider.css("top","40px");
-            slider.css("zIndex","999");
+            slider.css("zIndex","998");
             slider.animate({
                 height: ($("body").height()-75)+"px",
-                width: $("body").width()/2+"px"
-            }, 200, function(){
+                width: width+"px"
+            }, 100, function(){
                 // suksess
             });
 
@@ -19509,6 +19532,8 @@ var Menu = React.createClass({displayName: 'Menu',
             var html = jQuery('html');
             var scrollPosition = html.data('scroll-position');
             html.css('overflow', html.data('previous-overflow'));
+            $("body").css("overflow","visible");
+
             window.scrollTo(this.state.scrollPosition[1], this.state.scrollPosition[0])
             this.setState({
                 overflow:true,
@@ -19521,10 +19546,9 @@ var Menu = React.createClass({displayName: 'Menu',
             slider.animate({
                 height: "0px",
                 width: "0px"
-            }, 200, function(){
+            }, 100, function(){
                 // suksess
                 $("#slider").css("zIndex","0");
-
             });
         }
 

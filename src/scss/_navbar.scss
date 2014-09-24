@@ -63,3 +63,26 @@
   height: 20px;
   width: 0;
 }
+
+ul.slider{
+  list-style-type: none;
+  padding: 10px;
+  font-size: 3rem;
+  border-bottom: 1px solid black;
+  display: block;
+
+  h3{
+    font-size: 1.75rem;
+    text-decoration: dashed;
+    margin:0 0 5px 0;
+    padding-left: 0;
+  }
+
+  input{
+    width: 70%;
+    display: block;
+    border: 1px solid black;
+    padding: 0 0 0 5px;
+    border-radius: 0;
+  }
+}
