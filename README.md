@@ -1,14 +1,13 @@
-# React Sin
+# Robbestad.com Blog
 
-Testing a DOM-based sinewave with React
+Updated blog platform
 
-Check out [the result](http://reactsin.herokuapp.com/)
+Check out [the result](http://robbestad.herokuapp.com/)
 
 ## Build
 
    Clone the repo.
-   *npm install* 
-   *gulp*
+   **npm install**
 
 ## Workflow
 
@@ -16,7 +15,7 @@ Do all your work in 'src'. Monitor & build by executing **gulp**. Distribute the
 
 ## Deploy on Heroku
 
-(First deploy) Add the following buildpack:
+Add the following buildpack (if not previously added):
 
     heroku config:set BUILDPACK_URL=https://github.com/CHH/heroku-buildpack-php
 
@@ -27,13 +26,3 @@ Deploy the 'dist' folder:
 Or easier still:
 
     gulp heroku
-
-----
-
-Add database (if needed)
-
-    heroku addons:add cleardb:ignite
-
-Retrieve database URL
-
-    heroku config | grep CLEARDB_DATABASE_URL
