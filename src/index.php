@@ -56,7 +56,8 @@ class Blogger
 
 $blogger = new Blogger();
 $data = json_decode($blogger->fetch('http://api.robbestad.com/robbestad'), true);
-$articleNumber=$data['_embedded']['robbestad'][0]["id"];
+
+$articleNumber=@$data['_embedded']['robbestad'][0]["id"];
 if(empty($_GET["id"])){
  $articleNumber=0;
 } else {
@@ -96,15 +97,17 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
     </script>
 
 </head>
-<body>
+<body id="App">
 
 
 <div id="layout"></div>
-<div id="masthead"></div>
+<div id="masthead" class="hidden-xs"></div>
+
+<div id="menu" class="header hidden-sm hidden-md hidden-lg"></div>
+<div id="slider" class="header hidden-sm hidden-md hidden-lg"></div>
 
 <div class="container-fluid" >
     <div id="react-root"></div>
-
     <div class="header hidden-xs">
         <ul class="nav nav-pills pull-right">
             <li class="active"><a href="/index.php"><?php echo $l_hjem; ?></a></li>

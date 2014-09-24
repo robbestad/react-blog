@@ -8,15 +8,12 @@ var ReactTouch = require('react-touch');
 window.React = React;
 
 var MyComponent = require('./components/mycomponent.jsx');
-var FastSin = require('./components/fastsin.jsx');
-var Background = require('./components/background.jsx');
 var Masthead = require('./components/masthead.jsx');
-var BlogData = require('./components/blogdata.jsx');
 var Footer = require('./components/footer.jsx');
-var Sidebar = require('./components/sidebar.jsx');
-var Layout = require('./components/layout.jsx');
+var Menu = require('./components/menu.jsx');
 
 React.renderComponent(<MyComponent />, document.getElementById('content'));
 React.renderComponent(<Masthead myTitle="Robbestad.com" />, document.getElementById('masthead'));
 React.renderComponent(<Footer />, document.getElementById('myfooter'));
-React.renderComponent(<Layout />, document.getElementById('layout'));
+React.renderComponent(<Menu />, document.getElementById('menu'));
+//React.renderComponent(<Layout />, document.getElementById('layout'));

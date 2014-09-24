@@ -17,5 +17,4 @@ var RootPage = React.createClass({
         }
     }
 });
-
 module.exports = RootPage;
