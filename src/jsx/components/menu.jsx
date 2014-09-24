@@ -3,6 +3,7 @@
  */
 'use strict';
 
+React.initializeTouchEvents(true);
 
 var SetIntervalMixin = {
     componentWillMount: function() {
@@ -147,7 +148,7 @@ var Menu = React.createClass({
             <div>
                 <ul style={ulStyle}>
                     <li style={liStyle}>
-                        <div onClick={this.toggleNavClick} className="Layout-hamburger fa fa-bars" />
+                        <div onClick={this.toggleNavClick} onTouch={this.toggleNavClick}  className="Layout-hamburger fa fa-bars" />
                     </li>
                     <li style={liStyle}><div>{navOpen}</div>
                     </li>
