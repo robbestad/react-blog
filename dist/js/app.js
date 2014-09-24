@@ -240,6 +240,7 @@ var LeftNavContainer = React.createClass({displayName: 'LeftNavContainer',
       return;
     }
 
+
     this.scroller.scrollTo(this.props.sideWidth, 0, true);
     e.preventDefault();
   },
