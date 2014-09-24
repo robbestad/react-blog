@@ -20216,7 +20216,7 @@ var Layout = React.createClass({displayName: 'Layout',
 
     render: function () {
         var button = (
-            React.DOM.div({onClick: this.toggleNavClick, onTouch: this.toggleNavClick, className: "Layout-hamburger fa fa-bars"})
+            React.DOM.div({onClick: this.toggleNavClick, className: "Layout-hamburger fa fa-bars"})
         );
 
         var topContent = (

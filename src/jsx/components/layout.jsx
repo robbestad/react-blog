@@ -6,8 +6,8 @@
 })();
 var ReactTouch = require('react-touch');
 //var FPSCounter = require('react-touch/lib/environment/FPSCounter');
-//var RoutedLink = require('react-touch/lib/routing/RoutedLink');
-var App = require('react-touch/lib/primitives/App');
+var RoutedLink = require('react-touch/lib/routing/RoutedLink');
+//var App = require('react-touch/lib/primitives/App');
 
 //var RootPage = require('../pages/RootPage.jsx');
 //var Message = require('../components/message.jsx');
