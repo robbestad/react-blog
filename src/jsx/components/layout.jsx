@@ -68,7 +68,6 @@ var Layout = React.createClass({
         });
     },
 
-
     render: function () {
         var content=[];
         //console.log(this.state.title[0])
