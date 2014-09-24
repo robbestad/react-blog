@@ -66,16 +66,21 @@
 
 ul.slider{
   list-style-type: none;
-  padding: 10px;
-  font-size: 3rem;
-  border-bottom: 1px solid black;
+  padding: 0;
+  margin: 0;
+  font-size: 1.8rem;
   display: block;
+  z-index: 0;
 
+  li{
+    border-bottom: 1px solid #d0d0d0;
+    padding: 10px;
+  }
   h3{
-    font-size: 1.75rem;
+    font-size: 1.45rem;
     text-decoration: dashed;
     margin:0 0 5px 0;
-    padding-left: 0;
+    padding: 5px;
   }
 
   input{

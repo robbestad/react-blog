@@ -31,8 +31,8 @@ var React = require('react'),
     }
     return (
        <div ref="footer" style={footerStyle}>&copy;
-       Sven Anders Robbestad - 2014 -
-       <a href="https://github.com/svenanders/react-fullscreen">Source</a></div>
+       Sven Anders Robbestad - 2014 -&nbsp;
+       <a href="https://github.com/svenanders/react-fullscreen">Github</a></div>
       )
     }
 });

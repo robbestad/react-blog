@@ -20,79 +20,142 @@ var SetIntervalMixin = {
 var Menu = React.createClass({
     mixins: [SetIntervalMixin], // Use the mixin
     componentDidMount: function() {
-        this.setInterval(this.tick, 0); // Call a method on the mixin
+        this.setInterval(this.tick, 1000); // Call a method on the mixin
+        this.fetchBlogData();
     },
     getInitialState: function(){
-      return {
+        this.addResizeAttach();
+        return {
           overflow:true,
           scrollPosition:{
               0:0,1:0
-          }
+          },
+          width: window.innerWidth,
+          height: window.innerHeight,
+            sliderVisible:false
+        }
+    },
+    getInitialProps: function(){
+      return {
+          blogData: []
       }
     },
     tick: function() {
         var scrollTop = (window.pageYOffset !== undefined) ? window.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop;
         var menuTop = document.getElementById("menu").style.position;
         var width=document.body.clientWidth;
+        this.setProps({scrollTop: scrollTop, menuTop:menuTop, width: width, blogData: this.props.blogData});
+        if(undefined === this.props.blogData) {
+            this.fetchBlogData();
+        }
 
-        this.setProps({scrollTop: scrollTop, menuTop:menuTop, width: width});
+    },
+    onResize: function(){
+            this.setState({
+                overflow:this.state.overflow,
+                scrollPosition:{
+                    0:this.state.scrollPosition[0],
+                    1:this.state.scrollPosition[1]
+                },
+                sliderVisible: this.state.sliderVisible,
+                width: window.innerWidth,
+                height:window.innerHeight
+            });
+    },
+    addResizeAttach: function() {
+        if(window.attachEvent) {
+            window.attachEvent('onresize', this.onResize);
+        }
+        else if(window.addEventListener) {
+            window.addEventListener('resize', this.onResize, true);
+        }
+        else {
+            //The browser does not support Javascript event binding
+        }
+    },
+    removeAttachmentResize: function() {
+        if(window.detachEvent) {
+            window.detachEvent('onresize', this.onResize);
+        }
+        else if(window.removeEventListener) {
+            window.removeEventListener('resize', this.onResize);
+        }
+        else {
+            //The browser does not support Javascript event binding
+        }
+    },
+
+    fetchBlogData: function(){
+        var react = this;
+        $.ajax({
+            url: "http://api.robbestad.com/robbestad",
+            crossDomain:true,
+            dataType: "json",
+            success:function(data,text,xhqr){
+                $.each(data, function(i, item) {
+                    if("object" === typeof item["robbestad"] ){
+                        react.setProps({ blogData: item["robbestad"]});
+                    }
+                });
+            }
+        });
+
+    },
+    getBlogTitles:function(){
+        var results;
+        if(undefined !== this.props.blogData){
+            results = this.props.blogData;
+            var items='';
+            for(var i=0; i < this.props.blogData.length; i++)
+              items+= "<li key='" + i + "'><a href=\"/index.php?id="+this.props.blogData[i].id+"#nosplash\">" +
+                          this.props.blogData[i].title +
+                          "</a></li>" ;
+            return items;
+        } else {
+            return 'Loading';
+        }
     },
     toggleNavClick: function () {
+
         if(this.state.overflow){
             // lock scroll position, but retain settings for later
             var scrollPosition = [
                 self.pageXOffset || document.documentElement.scrollLeft || document.body.scrollLeft,
                 self.pageYOffset || document.documentElement.scrollTop  || document.body.scrollTop
             ];
-            var html = jQuery('html'); // it would make more sense to apply this to body, but IE7 won't have that
-            html.data('scroll-position', scrollPosition);
-            html.data('previous-overflow', html.css('overflow'));
-            html.css('overflow', 'hidden');
+
             this.setState({
                 overflow:false,
                 scrollPosition:{
                     0:window.document.body.scrollTop,
                     1:0
-                }
+                },
+                sliderVisible: true,
+                width: window.innerWidth,
+                height:window.innerHeight
             });
-            $("body").css("overflow","hidden")
-
-            var width = $("body").width() <= 320 ? 320 : $("body").width()/2;
+            $("body").css("overflow","hidden");
+            $(".container-fluid").css("overflow","hidden");
+            var width = this.state.width <= 320 ? 320 : this.state.width/2;
 
 
             var slider=$("#slider");
-            slider.html("<ul class='slider'>" +
-                "<li><h3>MENU</h3></li>"+
-                "<li><input type='text' placeholder='Search' value=''></li>"+
-                "<li>Link 2...</li>"+
-                "<li>Link 3...</li>"+
-                "<li>Link 4...</li>"+
-                "<li>Link 5...</li>"+
-                "<li>Link 6...</li>"+
-                "<li>Link 7...</li>"+
-                "<li>Link 8...</li>"+
-                "<li>Link 9...</li>"+
-                "<li>Link 10...</li>"+
-                "<li>Link 11...</li>"+
-                "<li>Link 12...</li>"+
-                "<li>Link 13...</li>"+
-                "<li>Link 14...</li>"+
-                "<li>Link 15...</li>"+
-            "</ul>");
             slider.css("display","block");
             slider.css("backgroundColor","#e0e0e0");
             slider.css("height","0px");
             slider.css("width","0px");
-            slider.css("position","fixed");
+            slider.css("position","absolute");
             slider.css("left","0");
-            slider.css("top","40px");
+            slider.css("overflow","auto");
+            slider.css("top",(scrollPosition[1]+40)+"px");
             slider.css("zIndex","998");
             slider.animate({
-                height: ($("body").height()-75)+"px",
+                height: (this.state.height-75)+"px",
                 width: width+"px"
             }, 100, function(){
                 // suksess
             });
+
 
 
 
@@ -104,12 +167,16 @@ var Menu = React.createClass({
             $("body").css("overflow","visible");
 
             window.scrollTo(this.state.scrollPosition[1], this.state.scrollPosition[0])
+
             this.setState({
                 overflow:true,
                 scrollPosition:{
                     0:window.document.body.scrollTop,
                     1:0
-                }
+                },
+                sliderVisible: false,
+                width: window.innerWidth,
+                height:window.innerHeight
             });
             var slider=$("#slider");
             slider.animate({
@@ -129,6 +196,14 @@ var Menu = React.createClass({
         var reducify=200;
         var padding=31;
         var opacity = this.props.scrollTop/reducify <= 1.0 ? this.props.scrollTop/reducify > 0.0 ? this.props.scrollTop/reducify : 0.0 : 1.0;
+
+        var slider=$("#slider");
+        if(this.state.sliderVisible){
+            slider.css("height",(this.state.height - 75) + "px");
+            slider.html("<ul class='slider'>" +
+            this.getBlogTitles() +
+            "</ul>");
+        }
 
 
         $(".mainRow").css("paddingTop",padding+'px');
@@ -160,25 +235,27 @@ var Menu = React.createClass({
             textAlign: 'center'
         };
 
+        var liFontStyle = {
+            fontFamily: 'Lobster, Open Sans',
+            fontSize:'2rem',
+            float: 'left',
+            width: width+"px",
+            padding: '5px 5px',
+            borderTop: '0',
+            height:'40px',
+            borderBottom: '1px solid black'
+        }
 
-        var navOpen='hmm';
 
-        if(this.state.overflow)
-            navOpen='yes';
-        else
-            navOpen='no';
         return <section style={divStyle} id="menu">
             <div>
                 <ul style={ulStyle}>
                     <li style={liStyle} className="hidden-lg">
                         <div onClick={this.toggleNavClick} className="Layout-hamburger fa fa-bars" />
                     </li>
-                    <li className="hidden-xs hidden-sm" style={liStyle}>
-                        <div onTouchStart={this.toggleNavClick}  className="Layout-hamburger2 fa fa-bars" />
+                    <li style={liFontStyle}><div>Robbestad.com</div>
                     </li>
-                    <li style={liStyle}><div>{navOpen}</div>
-                    </li>
-                    <li className="hidden-lg" style={liStyle}>{Math.round(this.props.scrollTop*1.2)}
+                    <li style={liFontStyle}><a href="/index.php?content=about#nosplash">About</a>
                     </li>
                 </ul>
             </div>

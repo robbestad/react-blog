@@ -110,14 +110,16 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
     <div id="react-root"></div>
     <div class="header hidden-xs">
         <ul class="nav nav-pills pull-right">
-            <li class="active"><a href="/index.php"><?php echo $l_hjem; ?></a></li>
-            <li><a href="http://www.robbestad.com"><?php echo $l_om; ?></a></li>
+            <li class="active"><a href="/index.php#nosplash"><?php echo $l_hjem; ?></a></li>
+            <li><a href="index.php?content=about#nosplash"><?php echo $l_om; ?></a></li>
             <li><a href="mailto:anders@robbestad.com"><?php echo $l_kontakt; ?></a></li>
         </ul>
         <a href="/index.php">
         <h1 class="text-muted" id="content">Headline</h1>
         </a>
     </div>
+
+
 
     <div class="row">
         <div class="col-md-3 col-sm-4 col-lg-3 hidden-xs sidebar">
@@ -129,6 +131,29 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
 
         </div>
         <div class="article col-sm-8 col-md-9 col-lg-10 col-xs-12">
+            <?php
+            if(!empty($_GET["content"])){ ?>
+                <div class="innerXsPadding">
+                    <h1>About</h1>
+                    <p>Sven Anders Robbestad is a programmer. He lives in a small town outside Oslo in Norway with his
+                    two children and his fiancee.
+                    </p>
+                    <p>
+                    He's been working with web technologies since the mid 90s. In the beginning he learned PHP, JavaScript, bash,
+                    Perl, server maintenance on BSD, CentOS, Red Hat and eventually Ubuntu as well as SQL software
+                    like MySQL and Oracle.
+                    </p>
+                    <p>
+                    As the years went by, he branched into learning Java, Python, Ruby, Objective C, as well
+                    as PostgreSQL, Mongo and Redis.
+                    </p>
+                    <p>Today, Sven is primarily a frontend and app programmer, happily exploring new JavaScript and
+                        HTML5 technologies, as well as writing apps for the iOS platform in Objective C & Swift.
+                    </p>
+                </div>
+           <?php
+            } else {
+            ?>
                 <div class="innerXsPadding">
                 <h1><?php echo $data["_embedded"]["robbestad"][$articleNumber]["title"]; ?></h1>
                 <?php echo $data["_embedded"]["robbestad"][$articleNumber]["content"]; ?>
@@ -151,7 +176,9 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
             <a href="http://disqus.com" class="dsq-brlink">comments powered by <span
                     class="logo-disqus">Disqus</span></a>
         </div>
+            <?php } ?>
         </div>
+
     </div>
     <!-- /div.container -->
 
