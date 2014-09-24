@@ -14,7 +14,7 @@ var Header = require('./Header.jsx');
 
 var Layout = React.createClass({
     handleNavClick: function () {
-        this.refs['leftNavContainer'].closeNav();
+        this.refs['leftNavContainer']._handleTap();
     },
     toggleNavClick: function () {
         this.refs['leftNavContainer']._handleTap();
