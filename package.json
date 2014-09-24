@@ -47,7 +47,7 @@
         "watchify": "^1.0.2"
     },
     "dependencies": {
-        "react-touch": "https://github.com/svenanders/react-touch/archive/gh-pages.tar.gz",
+        "react-touch": "https://github.com/svenanders/react-touch/archive/blog.tar.gz",
         "gulp-plumber": "^0.6.5",
         "gulp-sourcemaps": "^1.2.2",
         "react-router": "^0.7.0"
