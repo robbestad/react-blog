@@ -150,7 +150,7 @@ var Menu = React.createClass({
                     <li style={liStyle} className="hidden-lg">
                         <div onClick={this.toggleNavClick} className="Layout-hamburger fa fa-bars" />
                     </li>
-                    <li lassName="hidden-xs hidden-sm" style={liStyle}>
+                    <li className="hidden-xs hidden-sm" style={liStyle}>
                         <div onTouchStart={this.toggleNavClick}  className="Layout-hamburger2 fa fa-bars" />
                     </li>
                     <li style={liStyle}><div>{navOpen}</div>
