@@ -19594,9 +19594,8 @@ var Menu = React.createClass({displayName: 'Menu',
             $("body").css("overflow","hidden");
 
             $(".container-fluid").css("overflow","hidden");
-            var width = this.state.width <= 320 ? 320 : this.state.width/2;
-
-
+            //var width = this.state.width <= 320 ? 320 : this.state.width <= 568? 568 : this.state.width/2;
+            var width = this.state.width <= 640 ? this.state.width : this.state.width/2;
 
             var slider=$("#slider");
             slider.css("display","block");

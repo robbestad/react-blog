@@ -4,7 +4,10 @@
 
 $(document).ready(function () {
     FastClick.attach(document.body);
-    var myScroll = new IScroll('#slider')
+    if('undefined' !== typeof $("#slider")){
+        var myScroll = new IScroll('#slider');
+        myScroll.enable();
+    }
 });
 
 
