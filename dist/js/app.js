@@ -19728,7 +19728,7 @@ var Menu = React.createClass({displayName: 'Menu',
         return React.DOM.section({style: divStyle, id: "menu"}, 
             React.DOM.div(null, 
                 React.DOM.ul({style: ulStyle}, 
-                    React.DOM.li({style: liStyle, className: "hidden-lg"}, 
+                    React.DOM.li({onClick: this.toggleNavClick, style: liStyle, className: "hidden-lg"}, 
                         React.DOM.div({onClick: this.toggleNavClick, onTouchEnd: this.toggleNavClick, className: "Layout-hamburger fa fa-bars"})
                     ), 
                     React.DOM.li({style: liFontStyle}, React.DOM.div(null, "Robbestad.com")
