@@ -23,12 +23,22 @@ var React = require('react'),
         this.setInterval(this.tick, 20); // Call a method on the mixin
 
     },
+      getInitialState: function(){
+          return {
+            countdown:1
+          }
+      },
     tick: function() {
         var scrollTop = (window.pageYOffset !== undefined) ?
         window.pageYOffset : (document.documentElement
             || document.body.parentNode || document.body).scrollTop,
             width=document.body.clientWidth;
 
+        if(this.state.countdown>=0){
+            this.setState({
+                countdown: this.state.countdown-0.005
+            });
+        }
 
         var dontShowVal;
         if($(".container-fluid").innerHeight()<document.body.clientHeight){
@@ -52,14 +62,14 @@ var React = require('react'),
     render: function() {
         var reducify=40;
         var modifier = Math.abs(this.props.scrollTop/reducify);
-        var opacity = 1-modifier > 0 ? 1-modifier : 0;
+        var opacity = 1-modifier > 0 ? 1-(modifier) : 0;
         opacity = this.props.scrollTop > 0 ? 1 : opacity;
         if(this.props.dontShow === true){
             opacity=0;
         }
-        var z = opacity > 0.0 ? 90 : -1;
+        var z = opacity > 0.05 ? 90 : -1;
 
-
+        opacity=(opacity-(1-this.state.countdown));
         var divStyle= {
             position: 'fixed',
             //top: this.props.scrollTop,
