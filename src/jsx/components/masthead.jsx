@@ -31,6 +31,10 @@ var React = require('react'),
 
 
         var dontShowVal;
+        if($(".container-fluid").innerHeight()<document.body.clientHeight){
+            dontShowVal=true;
+        }
+        else
         if(this.refs.masthead.getDOMNode().style.opacity <= 0
             && scrollTop > 0){
             dontShowVal=true;
