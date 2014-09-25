@@ -25,7 +25,7 @@ var React = require('react'),
     },
       getInitialState: function(){
           return {
-            countdown:1
+            countdown:1.4
           }
       },
     tick: function() {
