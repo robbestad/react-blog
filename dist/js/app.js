@@ -19605,7 +19605,7 @@ var Menu = React.createClass({displayName: 'Menu',
             slider.css("width","0px");
             slider.css("position","absolute");
             slider.css("left","0");
-            slider.css("overflow","auto");
+            slider.css("overflow","scroll");
                 slider.css("zIndex","998");
             if(!isPhone){
                 slider.css("top",(scrollPosition[1]+40)+"px");

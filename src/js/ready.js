@@ -4,6 +4,7 @@
 
 $(document).ready(function () {
     FastClick.attach(document.body);
+    var myScroll = new IScroll('#slider')
 });
 
 
