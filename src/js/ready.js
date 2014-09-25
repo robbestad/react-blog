@@ -3,7 +3,7 @@
 })();
 
 $(document).ready(function () {
-    attachFastClick(document.body);
+    FastClick.attach(document.body);
 });
 
 
