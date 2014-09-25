@@ -126,7 +126,7 @@ gulp.task('regularjs', function () {
 });
 
 gulp.task('minifyapp', ['jscripts'], function () {
-    return gulp.src('dist/js/app.js')
+    return gulp.src(['dist/js/app.js','src/js/ready.js'])
         .pipe(uglify())
         .pipe(concat('app.min.js'))
         .pipe(gulp.dest('dist/js'));

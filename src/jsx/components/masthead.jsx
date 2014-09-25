@@ -21,6 +21,7 @@ var React = require('react'),
     mixins: [SetIntervalMixin], // Use the mixin
     componentDidMount: function() {
         this.setInterval(this.tick, 20); // Call a method on the mixin
+
     },
     tick: function() {
         var scrollTop = (window.pageYOffset !== undefined) ?
@@ -53,6 +54,7 @@ var React = require('react'),
             opacity=0;
         }
         var z = opacity > 0.0 ? 90 : -1;
+
 
         var divStyle= {
             position: 'fixed',
