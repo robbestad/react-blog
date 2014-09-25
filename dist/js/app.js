@@ -19720,7 +19720,7 @@ var Menu = React.createClass({displayName: 'Menu',
             position: 'fixed',
             top: '0px',
             width: document.getElementById("App").clientWidth+"px",
-            background: 'white',
+            backgroundColor: 'rgba(0,0,0,.3)',
             zIndex:'9999999',
             borderBottom: '1px dashed black'
         };
