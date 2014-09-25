@@ -62,6 +62,7 @@ gulp.task('jsx', function () {
             .pipe(source('app.js'))
              //do all processing here.
              //like uglification and so on.
+            .pipe(uglify())
             .pipe(gulp.dest('src/js'));
 });
 
@@ -123,6 +124,12 @@ gulp.task('regularjs', function () {
        .pipe(gulp.dest('dist/js'));
 });
 
+gulp.task('minifyapp', ['jscripts'], function () {
+    return gulp.src('dist/js/app.js')
+        .pipe(uglify())
+        .pipe(concat('app.min.js'))
+        .pipe(gulp.dest('dist/js'));
+});
 
 gulp.task('jscripts', ['regularjs'], function () {
     return browserify(paths.jsx)
