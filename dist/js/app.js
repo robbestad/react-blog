@@ -19702,7 +19702,13 @@ var Menu = React.createClass({displayName: 'Menu',
             borderTop: '0',
             height:'40px',
             borderBottom: '1px solid black'
-        }
+        };
+
+         var aFontStyleMini = {
+            fontFamily: 'Lobster, Open Sans',
+            fontSize:'1.3rem'
+
+        };
 
 
         return React.DOM.section({style: divStyle, id: "menu"}, 
@@ -19713,7 +19719,7 @@ var Menu = React.createClass({displayName: 'Menu',
                     ), 
                     React.DOM.li({style: liFontStyle}, React.DOM.div(null, "Robbestad.com")
                     ), 
-                    React.DOM.li({style: liFontStyle}, React.DOM.a({href: "/index.php?content=about#nosplash"}, "About")
+                    React.DOM.li({style: liFontStyle}, React.DOM.a({href: "/index.php?content=about#nosplash", style: aFontStyleMini}, "About")
                     )
                 )
             )

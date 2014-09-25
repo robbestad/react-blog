@@ -269,7 +269,13 @@ var Menu = React.createClass({
             borderTop: '0',
             height:'40px',
             borderBottom: '1px solid black'
-        }
+        };
+
+         var aFontStyleMini = {
+            fontFamily: 'Lobster, Open Sans',
+            fontSize:'1.3rem'
+
+        };
 
 
         return <section style={divStyle} id="menu">
@@ -280,7 +286,7 @@ var Menu = React.createClass({
                     </li>
                     <li style={liFontStyle}><div>Robbestad.com</div>
                     </li>
-                    <li style={liFontStyle}><a href="/index.php?content=about#nosplash">About</a>
+                    <li style={liFontStyle}><a href="/index.php?content=about#nosplash" style={aFontStyleMini}>About</a>
                     </li>
                 </ul>
             </div>
