@@ -116,9 +116,8 @@ var Menu = React.createClass({
         }
     },
     toggleNavClick: function () {
-        var width = this.state.width <= 320 ? 320 : this.state.width/2;
         var isPhone=false;
-        if(width==320){
+        if(window.screen.width<=320){
             isPhone=true;
         }
 
@@ -131,6 +130,7 @@ var Menu = React.createClass({
 
             if(isPhone){
                 window.scrollTo(scrollPosition[0], scrollPosition[1]);
+                $("body").css("position","fixed");
             }
 
 
@@ -145,7 +145,7 @@ var Menu = React.createClass({
                 height:window.innerHeight
             });
             $("body").css("overflow","hidden");
-            $("body").css("position","fixed");
+
             $(".container-fluid").css("overflow","hidden");
             var width = this.state.width <= 320 ? 320 : this.state.width/2;
 
@@ -159,17 +159,17 @@ var Menu = React.createClass({
             slider.css("position","absolute");
             slider.css("left","0");
             slider.css("overflow","auto");
-            //slider.css("top",(scrollPosition[1]+40)+"px");
-            slider.css("top","40px");
                 slider.css("zIndex","998");
             if(!isPhone){
-            slider.animate({
+                slider.css("top",(scrollPosition[1]+40)+"px");
+                slider.animate({
                 height: (this.state.height-75)+"px",
                 width: width+"px"
             }, 100, function(){
                 // suksess
             });
             } else {
+                slider.css("top","40px");
                 slider.css("height",this.state.height-75+"px");
                 slider.css("width",width+"px");
             }
