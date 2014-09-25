@@ -19728,11 +19728,11 @@ var Menu = React.createClass({displayName: 'Menu',
         return React.DOM.section({style: divStyle, id: "menu"}, 
             React.DOM.div(null, 
                 React.DOM.ul({style: ulStyle}, 
-                    React.DOM.li({onClick: this.toggleNavClick, onTouchEnd: this.toggleNavClick, style: liStyle, className: "hidden-lg"}, 
-                        React.DOM.div({onClick: this.toggleNavClick, onTouchEnd: this.toggleNavClick, className: "Layout-hamburger fa fa-bars"})
+                    React.DOM.li({onClick: this.toggleNavClick, style: liStyle, className: "hidden-lg"}, 
+                        React.DOM.div({onClick: this.toggleNavClick, className: "Layout-hamburger fa fa-bars"})
                     ), 
-                    React.DOM.li({onClick: this.toggleNavClick, onTouchEnd: this.toggleNavClick, style: liFontStyle}, 
-                        React.DOM.div({onClick: this.toggleNavClick, onTouchEnd: this.toggleNavClick}, "Robbestad.com")
+                    React.DOM.li({onClick: this.toggleNavClick, style: liFontStyle}, 
+                        React.DOM.div({onClick: this.toggleNavClick}, "Robbestad.com")
                     ), 
                     React.DOM.li({style: liFontStyle}, React.DOM.a({href: "/index.php?content=about#nosplash", style: aFontStyleMini}, "About")
                     )
