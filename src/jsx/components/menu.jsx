@@ -251,7 +251,7 @@ var Menu = React.createClass({
             <div>
                 <ul style={ulStyle}>
                     <li style={liStyle} className="hidden-lg">
-                        <div onClick={this.toggleNavClick} className="Layout-hamburger fa fa-bars" />
+                        <div onClick={this.toggleNavClick}  onTouchEnd={this.toggleNavClick} className="Layout-hamburger fa fa-bars" />
                     </li>
                     <li style={liFontStyle}><div>Robbestad.com</div>
                     </li>
