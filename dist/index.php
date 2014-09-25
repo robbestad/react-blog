@@ -186,9 +186,9 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
 </body>
 
 <!-- Zynga Scroller -->
-<script type="text/javascript" src="http://zynga.github.io/scroller/src/Raf.js"></script>
-<script type="text/javascript" src="http://zynga.github.io/scroller/src/Animate.js"></script>
-<script type="text/javascript" src="http://zynga.github.io/scroller/src/Scroller.js"></script>
+<!--<script type="text/javascript" src="http://zynga.github.io/scroller/src/Raf.js"></script>-->
+<!--<script type="text/javascript" src="http://zynga.github.io/scroller/src/Animate.js"></script>-->
+<!--<script type="text/javascript" src="http://zynga.github.io/scroller/src/Scroller.js"></script>-->
 
 <!-- Contains jQuery, React and compiled js (included jsx) -->
 <script type="text/javascript" src="./js/libs.min.js"></script>

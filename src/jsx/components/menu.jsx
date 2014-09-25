@@ -116,6 +116,11 @@ var Menu = React.createClass({
         }
     },
     toggleNavClick: function () {
+        var width = this.state.width <= 320 ? 320 : this.state.width/2;
+        var isPhone=false;
+        if(width==320){
+            isPhone=true;
+        }
 
         if(this.state.overflow){
             // lock scroll position, but retain settings for later
@@ -123,6 +128,11 @@ var Menu = React.createClass({
                 self.pageXOffset || document.documentElement.scrollLeft || document.body.scrollLeft,
                 self.pageYOffset || document.documentElement.scrollTop  || document.body.scrollTop
             ];
+
+            if(isPhone){
+                window.scrollTo(scrollPosition[0], scrollPosition[1]);
+            }
+
 
             this.setState({
                 overflow:false,
@@ -135,8 +145,10 @@ var Menu = React.createClass({
                 height:window.innerHeight
             });
             $("body").css("overflow","hidden");
+            $("body").css("position","fixed");
             $(".container-fluid").css("overflow","hidden");
             var width = this.state.width <= 320 ? 320 : this.state.width/2;
+
 
 
             var slider=$("#slider");
@@ -147,15 +159,20 @@ var Menu = React.createClass({
             slider.css("position","absolute");
             slider.css("left","0");
             slider.css("overflow","auto");
-            slider.css("top",(scrollPosition[1]+40)+"px");
-            slider.css("zIndex","998");
+            //slider.css("top",(scrollPosition[1]+40)+"px");
+            slider.css("top","40px");
+                slider.css("zIndex","998");
+            if(!isPhone){
             slider.animate({
                 height: (this.state.height-75)+"px",
                 width: width+"px"
             }, 100, function(){
                 // suksess
             });
-
+            } else {
+                slider.css("height",this.state.height-75+"px");
+                slider.css("width",width+"px");
+            }
 
 
 
@@ -165,6 +182,9 @@ var Menu = React.createClass({
             var scrollPosition = html.data('scroll-position');
             html.css('overflow', html.data('previous-overflow'));
             $("body").css("overflow","visible");
+            $(".container-fluid").css("overflow","visible");
+            $("body").css("position","relative");
+           // $("body").css("position","");
 
             window.scrollTo(this.state.scrollPosition[1], this.state.scrollPosition[0])
 
@@ -179,6 +199,7 @@ var Menu = React.createClass({
                 height:window.innerHeight
             });
             var slider=$("#slider");
+            if(!isPhone){
             slider.animate({
                 height: "0px",
                 width: "0px"
@@ -186,6 +207,10 @@ var Menu = React.createClass({
                 // suksess
                 $("#slider").css("zIndex","0");
             });
+            } else {
+                //slider.css("zIndex",0);
+                slider.css("width",0);
+            }
         }
 
 
