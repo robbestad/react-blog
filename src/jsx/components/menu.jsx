@@ -155,7 +155,7 @@ var Menu = React.createClass({
     },
     toggleNavClick: function () {
         var isPhone=false;
-        if(window.screen.width<=320){
+            if(window.screen.width<=640){
             isPhone=true;
         }
 
@@ -283,7 +283,8 @@ var Menu = React.createClass({
             width: width+"px",
             padding: '15px 5px',
             borderTop: '0',
-            height:'40px'
+            height:'40px',
+            zIndex: 999
         };
 
         var ulStyle = {
@@ -303,6 +304,7 @@ var Menu = React.createClass({
             width: width+"px",
             padding: '5px 5px',
             borderTop: '0',
+            zIndex: 999,
             height:'40px'
         };
 
@@ -316,8 +318,8 @@ var Menu = React.createClass({
         return <section style={divStyle} id="menu">
             <div>
                 <ul style={ulStyle}>
-                    <li onClick={this.toggleNavClick}   style={liStyle} className="hidden-lg">
-                        <div onClick={this.toggleNavClick}    className="Layout-hamburger fa fa-bars" />
+                    <li onClick={this.toggleNavClick} style={liStyle} className="hidden-lg">
+                        <div onClick={this.toggleNavClick} className="Layout-hamburger fa fa-bars" />
                     </li>
                     <li onClick={this.toggleNavClick}   style={liFontStyle}>
                         <div onClick={this.toggleNavClick}   >Robbestad.com</div>

@@ -19602,7 +19602,7 @@ var Menu = React.createClass({displayName: 'Menu',
     },
     toggleNavClick: function () {
         var isPhone=false;
-        if(window.screen.width<=320){
+            if(window.screen.width<=640){
             isPhone=true;
         }
 
@@ -19730,7 +19730,8 @@ var Menu = React.createClass({displayName: 'Menu',
             width: width+"px",
             padding: '15px 5px',
             borderTop: '0',
-            height:'40px'
+            height:'40px',
+            zIndex: 999
         };
 
         var ulStyle = {
@@ -19750,6 +19751,7 @@ var Menu = React.createClass({displayName: 'Menu',
             width: width+"px",
             padding: '5px 5px',
             borderTop: '0',
+            zIndex: 999,
             height:'40px'
         };
 
