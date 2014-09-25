@@ -36,7 +36,7 @@ var React = require('react'),
 
         if(this.state.countdown>=0){
             this.setState({
-                countdown: this.state.countdown-0.005
+                countdown: this.state.countdown-0.015
             });
         }
 

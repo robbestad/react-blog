@@ -20,7 +20,7 @@ var SetIntervalMixin = {
 var Menu = React.createClass({
     mixins: [SetIntervalMixin], // Use the mixin
     componentDidMount: function() {
-        this.setInterval(this.tick, 1000); // Call a method on the mixin
+        this.setInterval(this.tick, 1500); // Call a method on the mixin
         this.fetchBlogData();
     },
     getInitialState: function(){
@@ -30,7 +30,7 @@ var Menu = React.createClass({
           scrollPosition:{
               0:0,1:0
           },
-          width: window.innerWidth,
+          width: document.body.clientWidth,
           height: window.innerHeight,
             sliderVisible:false
         }
@@ -43,10 +43,45 @@ var Menu = React.createClass({
     tick: function() {
         var scrollTop = (window.pageYOffset !== undefined) ? window.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop;
         var menuTop = document.getElementById("menu").style.position;
-        var width=document.body.clientWidth;
-        this.setProps({scrollTop: scrollTop, menuTop:menuTop, width: width, blogData: this.props.blogData});
+        this.setState({scrollTop: scrollTop, menuTop:menuTop,  width: window.innerWidth,
+            scrollPosition:this.state.scrollPosition,
+            height: window.innerHeight, overflow:this.state.overflow});
+        //this.setProps({blogData: this.props.blogData});
         if(undefined === this.props.blogData) {
             this.fetchBlogData();
+        }
+
+        //this.setWidthOfSlider();
+
+
+    },
+    setWidthOfSlider:function(){
+        if(this.state.overflow===false) {
+            //var slider = $("#slider");
+            //var width = this.state.width <= 640 ? this.state.width : this.state.width / 2;
+            //slider.css("width", width + "px");
+
+        var slider=$("#slider");
+        var width = this.state.width <= 640 ? this.state.width : this.state.width/2;
+        //slider.css("width",width+"px");
+
+        var isPhone=false;
+        if(window.screen.width<=320){
+            isPhone=true;
+        }
+
+        if(!isPhone){
+            slider.animate({
+                height: (this.state.height-75)+"px",
+                width: width+"px"
+            }, 100, function(){
+                // suksess
+            });
+        } else {
+            slider.css("top","40px");
+            slider.css("height",this.state.height-75+"px");
+            slider.css("width",width+"px");
+        }
         }
 
     },
@@ -61,7 +96,10 @@ var Menu = React.createClass({
                 width: window.innerWidth,
                 height:window.innerHeight
             });
-    },
+
+            this.setWidthOfSlider();
+
+        },
     addResizeAttach: function() {
         if(window.attachEvent) {
             window.attachEvent('onresize', this.onResize);
@@ -217,9 +255,9 @@ var Menu = React.createClass({
 
     render: function () {
         var width = ((document.getElementById("App").clientWidth) / 3) - 2;
-        var reducify=200;
+        var reduceFactor=200;
         var padding=31;
-        var opacity = this.props.scrollTop/reducify <= 1.0 ? this.props.scrollTop/reducify > 0.0 ? this.props.scrollTop/reducify : 0.0 : 1.0;
+        var opacity = this.state.scrollTop/reduceFactor <= 1.0 ? this.state.scrollTop/reduceFactor > 0.0 ? this.state.scrollTop/reduceFactor : 0.0 : 1.0;
 
         var slider=$("#slider");
         if(this.state.sliderVisible){
@@ -229,7 +267,6 @@ var Menu = React.createClass({
             "</ul>");
         }
 
-
         $(".mainRow").css("paddingTop",padding+'px');
         var divStyle= {
             display: 'block',
@@ -237,7 +274,8 @@ var Menu = React.createClass({
             top: '0px',
             width: document.getElementById("App").clientWidth+"px",
             background: 'white',
-            zIndex:'9999999'
+            zIndex:'9999999',
+            borderBottom: '1px dashed black'
         };
 
         var liStyle = {
@@ -245,8 +283,7 @@ var Menu = React.createClass({
             width: width+"px",
             padding: '15px 5px',
             borderTop: '0',
-            height:'40px',
-            borderBottom: '1px solid black'
+            height:'40px'
         };
 
         var ulStyle = {
@@ -266,8 +303,7 @@ var Menu = React.createClass({
             width: width+"px",
             padding: '5px 5px',
             borderTop: '0',
-            height:'40px',
-            borderBottom: '1px solid black'
+            height:'40px'
         };
 
          var aFontStyleMini = {
