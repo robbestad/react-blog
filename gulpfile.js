@@ -136,6 +136,7 @@ gulp.task('jscripts', ['regularjs'], function () {
 // Copy all static libraries
 gulp.task('jslibs', function () {
     return gulp.src(paths.jslibs)
+        .pipe(uglify())
         .pipe(concat('libs.min.js'))
         .pipe(gulp.dest('dist/js'));
 });
