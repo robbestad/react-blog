@@ -115,7 +115,7 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
             <li><a href="mailto:anders@robbestad.com"><?php echo $l_kontakt; ?></a></li>
         </ul>
         <a href="/index.php">
-        <h1 class="text-muted" id="content">Headline</h1>
+        <h1 class="text-muted" id="content">Robbestad.com</h1>
         </a>
     </div>
 
