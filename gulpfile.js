@@ -107,6 +107,7 @@ gulp.task('less', function () {
 
 gulp.task('css', ['less', 'sass'], function () {
     return gulp.src([
+          'bower_components/normalize-css/normalize.css',
           'src/css/bootstrap.css',
           'src/css/font-awesome.css',
           'src/css/main.css'
@@ -127,7 +128,10 @@ gulp.task('regularjs', function () {
 });
 
 gulp.task('minifyapp', ['jscripts'], function () {
-    return gulp.src(['dist/js/app.js','src/js/ready.js'])
+    return gulp.src(['dist/js/app.js','src/js/ready.js',
+        'src/js/rainbow.js','src/js/language/css.js',
+        'src/js/language/php.js','src/js/language/javascript.js',
+        'src/js/language/shell.js','src/js/language/python.js'])
         .pipe(uglify())
         .pipe(concat('app.min.js'))
         .pipe(gulp.dest('dist/js'));
