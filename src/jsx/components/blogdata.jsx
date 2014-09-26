@@ -21,8 +21,8 @@ var BlogData = React.createClass({
     },
     tick: function() {
       //this.fetchBlogData();
-        if('undefined' !== typeof this.refs.blogdata.getDOMNode())
-            console.log(this.refs.blogdata.getDOMNode().style.innerHeight);
+      //  if('undefined' !== typeof this.refs.blogdata.getDOMNode())
+      //      console.log(this.refs.blogdata.getDOMNode().style.innerHeight);
     },
     setInitialProps: function(){
       blogData: false

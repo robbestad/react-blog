@@ -131,6 +131,8 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
 
         </div>
         <div class="article col-sm-8 col-md-9 col-lg-10 col-xs-12">
+            <div id="quiz"></div>
+
             <?php
             if(!empty($_GET["content"])){ ?>
                 <div class="innerXsPadding">

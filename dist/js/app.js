@@ -12,14 +12,18 @@ var MyComponent = require('./components/mycomponent.jsx');
 var Masthead = require('./components/masthead.jsx');
 var Footer = require('./components/footer.jsx');
 var Menu = require('./components/menu.jsx');
+var Quiz = require('./components/quiz.jsx');
 
 React.renderComponent(MyComponent(null), document.getElementById('content'));
 React.renderComponent(Masthead({myTitle: "Robbestad.com"}), document.getElementById('masthead'));
 React.renderComponent(Footer(null), document.getElementById('myfooter'));
 React.renderComponent(Menu(null), document.getElementById('menu'));
-//React.renderComponent(<Layout />, document.getElementById('layout'));
 
-},{"./components/footer.jsx":152,"./components/masthead.jsx":153,"./components/menu.jsx":154,"./components/mycomponent.jsx":155,"react":151,"react-touch":3}],2:[function(require,module,exports){
+if(window.location.hash === "#quiz")
+    React.renderComponent(Quiz(null), document.getElementById('quiz'));
+
+
+},{"./components/footer.jsx":152,"./components/masthead.jsx":153,"./components/menu.jsx":154,"./components/mycomponent.jsx":155,"./components/quiz.jsx":156,"react":151,"react-touch":3}],2:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -19797,5 +19801,94 @@ var React = require('react'),
     });
 
 module.exports = Mycomponent;
+
+},{"react":151}],156:[function(require,module,exports){
+/** @jsx React.DOM */
+
+'use strict';
+
+var React = require('react'),
+
+    Quiz = React.createClass({displayName: 'Quiz',
+
+        sarQuiz: function(quizName){
+            this.quizName = quizName;
+            this.answers = [];
+            this.questions = ['Question A','Question B','Question C'];
+        },
+
+
+        getQuizName: function() {
+        return this.quizName;
+        },
+
+        getQuestion: function() {
+            return this.questions[2];
+            // need shuffle & array pop
+        },
+
+        registerAnswer: function(question,answer) {
+            this.answers.push(answer);
+            $(".spm").css("opacity",0.5);
+            $(".spm").attr("disabled", "disabled");
+        },
+
+        getQuizFromApi: function(id, h1) {
+        $.getJSON( "http://api.robbestad.com/programmingquiz/"+id, function( data ) {
+                console.log(data);
+                //data.language='php';
+                //var q = data.question.replace("[code]", "<pre><code data-language=\""+data.language+"\">");
+                //q = q.replace("[/code]","</code></pre>");
+                //h1.innerHTML=q;
+                //Rainbow.color($(".questionTitle"));
+                //return data.question;
+            });
+        },
+
+        componentDidMount: function(){
+            this.getQuizFromApi(1,$("h1.questionTitle")[0]);
+        },
+
+        render: function() {
+            $('.spm').click(function(){
+                var question=($(this).parent().attr("value"));
+                var answer=($(this).attr("key"));
+                this.registerAnswer(question,answer)
+
+                // UI
+                $(this).addClass("animate bounceOut").delay(750).queue(function(){
+                    $(this).css("opacity",0);
+                    $(".spm").css("opacity",1);
+                });
+            });
+
+
+            return (
+                React.DOM.div({className: "Quiz"}, 
+                    React.DOM.h1(null, "Quiz"), 
+
+                    React.DOM.div({className: "quizhead"}, 
+                        React.DOM.h1({className: "questionTitle"}, "Question 1")
+                    ), 
+                    React.DOM.ul({className: "quiz", value: "spørsmål 1"}, 
+                        React.DOM.li({value: "1"}, 
+                            React.DOM.input({className: "a spm", type: "button", key: "1", value: "Svar 1"})
+                            ), 
+                        React.DOM.li({value: "2"}, 
+                            React.DOM.input({className: "a spm", type: "button", key: "2", value: "Svar 2"})
+                            ), 
+                        React.DOM.li({value: "3"}, 
+                            React.DOM.input({className: "a spm", type: "button", key: "3", value: "Svar 3"})
+                            ), 
+                        React.DOM.li({value: "4"}, 
+                            React.DOM.input({className: "a spm", type: "button", key: "4", value: "Svar 4"})
+                            )
+                    )
+                )
+            )
+        }
+    });
+
+module.exports = Quiz;
 
 },{"react":151}]},{},[1]);
