@@ -43,6 +43,12 @@ a{
   border-radius: 5px 0 0 0;
 }
 
+.article{
+  a{
+    text-decoration: underline;
+  }
+}
+
 .singlearticle{
   display:none;
 }
