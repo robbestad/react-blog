@@ -6,7 +6,9 @@ $(document).ready(function () {
     FastClick.attach(document.body);
     if('undefined' !== typeof $("#slider")){
         var myScroll = new IScroll('#slider');
-        myScroll.enable();
+        if('undefined' !== typeof myScroll) {
+            myScroll.enable();
+        }
     }
 });
 
