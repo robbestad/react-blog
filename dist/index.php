@@ -190,6 +190,7 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
 
 <!-- Contains jQuery, React and compiled js (included jsx) -->
 <script type="text/javascript" src="./js/libs.min.js"></script>
+<script type="text/javascript" src="./js/iscroll.js"></script>
 <script type="text/javascript" src="./js/app.min.js"></script>
 <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){

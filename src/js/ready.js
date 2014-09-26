@@ -4,15 +4,13 @@
 
 $(document).ready(function () {
     FastClick.attach(document.body);
-    if('undefined' !== typeof $("#slider")){
-        var myScroll = new IScroll('#slider');
-        if('undefined' !== typeof myScroll) {
-            myScroll.enable();
-        }
-    }
 });
 
-
+var myScroll;
+function loaded() {
+    var myScroll = new IScroll('#slider');
+    myScroll.enable();
+}
 
 
 //WebFontConfig = {

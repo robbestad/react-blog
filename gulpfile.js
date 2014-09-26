@@ -29,9 +29,8 @@ var paths = {
     scripts: ['./.build/js/libs.js', './.build/js/app.js'],
     jslibs: [
         'bower_components/jquery/dist/jquery.js',
-        'node_modules/fastclick/lib/fastclick.js',
-        'bower_components/iscroll/build/iscroll.js',
-        'bower_components/bootstrap/dist/js/bootstrap.js'
+        'bower_components/bootstrap/dist/js/bootstrap.js',
+        'node_modules/fastclick/lib/fastclick.js'
     ],
     images: 'src/img/**/*.jpg',
     png: 'src/img/**/*.png',
