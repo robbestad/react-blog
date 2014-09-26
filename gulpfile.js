@@ -30,6 +30,7 @@ var paths = {
     jslibs: [
         'bower_components/jquery/dist/jquery.js',
         'bower_components/bootstrap/dist/js/bootstrap.js',
+        'bower_components/iscroll/build/iscroll.js',
         'node_modules/fastclick/lib/fastclick.js'
     ],
     images: 'src/img/**/*.jpg',
