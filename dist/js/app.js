@@ -19334,6 +19334,8 @@ var React = require('react'),
             textAlign:'center',
             padding:'15px 10px 0 20px',
             marginTop:'35px',
+            borderRadius: '5px',
+            borderTop: '1px solid #a5a5a5',
             zIndex:'999',
             marginLeft:'-15px'
     }
@@ -19733,7 +19735,8 @@ var Menu = React.createClass({displayName: 'Menu',
             width: document.getElementById("App").clientWidth+"px",
             backgroundColor: '#f1f1f1',
             zIndex:'9999999',
-            borderBottom: '1px dashed black'
+            borderRadius: '5px',
+            borderBottom: '1px solid #a5a5a5'
         };
 
         var liStyle = {

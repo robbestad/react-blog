@@ -4,25 +4,14 @@ $l_hjem = "Home";
 $l_om = "About";
 $l_kontakt = "Contact";
 $l_kode = "Code";
-
 $requestURL = "http://api.robbestad.com/robbestad";
-
 class Blogger
 {
-
-
-    public function __construct()
-    {
-
-    }
-
     private function callAPI($method, $url, $header, $data = false)
     {
         $curl = curl_init();
-
         if ($header)
             curl_setopt($curl, CURLOPT_HEADER, $header);
-
         switch ($method) {
             case "POST":
                 curl_setopt($curl, CURLOPT_POST, 1);
@@ -43,7 +32,6 @@ class Blogger
 
         return curl_exec($curl);
     }
-
     public function fetch($requestURL)
     {
         try {
@@ -53,10 +41,8 @@ class Blogger
         }
     }
 }
-
 $blogger = new Blogger();
 $data = json_decode($blogger->fetch('http://api.robbestad.com/robbestad'), true);
-
 $articleNumber=@$data['_embedded']['robbestad'][0]["id"];
 if(empty($_GET["id"])){
  $articleNumber=0;
@@ -86,7 +72,6 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
     <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
-
     <script src="//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js"></script>
     <script>
         WebFont.load({
@@ -95,18 +80,12 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
             }
         });
     </script>
-
 </head>
 <body id="App">
-
-
 <div id="layout"></div>
-<div id="sidebar"></div>
 <div id="masthead" class="hidden-xs"></div>
-
 <div id="menu" class="header hidden-sm hidden-md hidden-lg"></div>
 <div id="slider" class="header hidden-sm hidden-md hidden-lg"></div>
-
 <div class="container-fluid" >
     <div id="react-root"></div>
     <div class="header hidden-xs">
@@ -119,9 +98,6 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
         <h1 class="text-muted" id="content">Robbestad.com</h1>
         </a>
     </div>
-
-
-
     <div class="row">
         <div class="col-md-3 col-sm-4 col-lg-3 hidden-xs sidebar">
             <?php foreach ($data["_embedded"]["robbestad"] as $item) {
@@ -129,11 +105,9 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
                     href="/index.php?id=' . $item["id"] . '#nosplash">' . ($item["title"] . '</a></h2><hr>');
             }
             ?>
-
         </div>
         <div class="article col-sm-8 col-md-9 col-lg-10 col-xs-12">
             <div id="quiz"></div>
-
             <?php
             if(!empty($_GET["content"])){ ?>
                 <div class="innerXsPadding">
@@ -181,14 +155,10 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
         </div>
             <?php } ?>
         </div>
-
     </div>
     <!-- /div.container -->
-
     <div id="myfooter"></div>
 </body>
-
-
 <!-- Contains jQuery, React and compiled js (included jsx) -->
 <script type="text/javascript" src="./js/libs.min.js"></script>
 <script type="text/javascript" src="./js/app.js"></script>
@@ -197,8 +167,6 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
         (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
         m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
     })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
     ga('create', 'UA-45283197-1', 'auto');
     ga('send', 'pageview');
-
 </script>

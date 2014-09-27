@@ -26,6 +26,8 @@ var React = require('react'),
             textAlign:'center',
             padding:'15px 10px 0 20px',
             marginTop:'35px',
+            borderRadius: '5px',
+            borderTop: '1px solid #a5a5a5',
             zIndex:'999',
             marginLeft:'-15px'
     }
