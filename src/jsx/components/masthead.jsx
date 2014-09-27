@@ -67,31 +67,35 @@ var React = require('react'),
         if(this.props.dontShow === true){
             opacity=0;
         }
-        var z = opacity > 0.05 ? 90 : -1;
-
         opacity=(opacity-(1-this.state.countdown));
+        var z = opacity > 0.01 ? 90 : 0;
+        var display = z === -1 ? 'none' : 'block';
+        var width = z === -1 ? 0 : window.innerWidth;
+        var height = z === -1 ? 0 : window.innerHeight;
+        //console.log(height+ "x" + width + ":" + opacity + ":" +z +">"+this.props.dontShow);
         var divStyle= {
             position: 'fixed',
             //top: this.props.scrollTop,
             left: '0',
             top: '0',
-            width: window.innerWidth,
-            height: window.innerHeight,
+            width: width,
+            height: height,
             background: 'url(img/bg.png) repeat 50% 50%',
             backgroundSize:'cover',
             fontFamily:'Arial, Verdana, sans-serif',
             transform: 'translateZ(0) scale(1)',
             zIndex: z,
+            //display:display,
             opacity: opacity,
             textAlign: 'center'
-        }
+        };
         var logoStyle = {
             top: ((window.innerHeight/2)-100)+"px",
             color: 'white',
             fontSize: '7rem',
             left: (window.innerWidth/2)-(567/2)+"px",
             position: 'fixed'
-        }
+        };
       return (<div ref="masthead" style={divStyle}>
         <div className="animated zoomIn" style={logoStyle}><img src="img/robcom.png" /></div>
         </div>)
