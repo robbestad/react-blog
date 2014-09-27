@@ -69,7 +69,7 @@ var React = require('react'),
         }
         opacity=(opacity-(1-this.state.countdown));
         var z = opacity > 0.01 ? 90 : 0;
-        var display = z === -1 ? 'none' : 'block';
+        //var display = z === -1 ? 'none' : 'block';
         var width = z === -1 ? 0 : window.innerWidth;
         var height = z === -1 ? 0 : window.innerHeight;
         //console.log(height+ "x" + width + ":" + opacity + ":" +z +">"+this.props.dontShow);
