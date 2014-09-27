@@ -127,13 +127,18 @@ gulp.task('regularjs', function () {
        .pipe(gulp.dest('dist/js'));
 });
 
-gulp.task('minifyapp', ['jscripts'], function () {
+gulp.task('minifyapp', ['jscripts','unminified'], function () {
     return gulp.src(['dist/js/app.js','src/js/ready.js',
-        'src/js/rainbow.js','src/js/language/css.js',
-        'src/js/language/php.js','src/js/language/javascript.js',
-        'src/js/language/shell.js','src/js/language/python.js'])
+        'src/js/rainbow.js','src/js/language/**/*'])
         .pipe(uglify())
         .pipe(concat('app.min.js'))
+        .pipe(gulp.dest('dist/js'));
+});
+
+gulp.task('unminified', ['jscripts'], function () {
+    return gulp.src(['dist/js/app.js','src/js/ready.js',
+        'src/js/rainbow.js','src/js/language/**/*'])
+        .pipe(concat('app.js'))
         .pipe(gulp.dest('dist/js'));
 });
 

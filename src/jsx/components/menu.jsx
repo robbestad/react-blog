@@ -23,6 +23,7 @@ var Menu = React.createClass({
         this.setInterval(this.tick, 1500); // Call a method on the mixin
         this.fetchBlogData();
     },
+
     getInitialState: function(){
         this.addResizeAttach();
         return {
