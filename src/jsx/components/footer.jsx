@@ -25,7 +25,7 @@ var React = require('react'),
             height:'35px',
             fontSize:'1.3rem',
             textAlign:'center',
-            padding:'15px 10px 0 20px',
+            padding:'5px 10px 0 20px',
             marginTop:'35px',
             borderRadius: '5px',
             borderTop: '1px solid #a5a5a5',
@@ -34,8 +34,7 @@ var React = require('react'),
     }
     return (
        <div ref="footer" style={footerStyle}>&copy;
-       Sven Anders Robbestad - 2014 -&nbsp;
-       <a href="https://github.com/svenanders/react-fullscreen">Github</a></div>
+       Sven Anders Robbestad - 2014 </div>
       )
     }
 });
