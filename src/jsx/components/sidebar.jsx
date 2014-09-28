@@ -39,7 +39,7 @@ var React = require('react'),
                 }
             }
             return (
-                <div style={style}>
+                <div style={style} className="responsiveSlide">
                     <ul className="slider" style={bg} dangerouslySetInnerHTML={{__html: this.props.blogTitles}} />
                 </div>
             )

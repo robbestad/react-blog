@@ -20066,7 +20066,7 @@ var React = require('react'),
                 }
             }
             return (
-                React.DOM.div({style: style}, 
+                React.DOM.div({style: style, className: "responsiveSlide"}, 
                     React.DOM.ul({className: "slider", style: bg, dangerouslySetInnerHTML: {__html: this.props.blogTitles}})
                 )
             )
