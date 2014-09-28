@@ -24,7 +24,8 @@ var React = require('react'),
                     width:this.props.width <= 768 ? this.props.width : this.props.width/2+"px",
                     //height:(this.props.height-75)+"px",
                     height:'100%',
-                    zIndex:'998'
+                    zIndex:'998',
+                    overflowScroll:'touch'
                 }
             }
             var bg={
@@ -39,7 +40,7 @@ var React = require('react'),
                 }
             }
             return (
-                <div style={style} className="responsiveSlide">
+                <div style={style} className="responsiveList">
                     <ul className="slider" style={bg} dangerouslySetInnerHTML={{__html: this.props.blogTitles}} />
                 </div>
             )

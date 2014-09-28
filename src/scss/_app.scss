@@ -32,8 +32,10 @@ h1{
   background-color: #e0e0e0;
   z-index: 1;
 }
-.responsiveSlide{
+.responsiveList{
   -webkit-overflow-scroll: touch;
+  overflow-scroll:touch;
+  -ms-overflow-style: -ms-autohiding-scrollbar;
 }
 
 a{

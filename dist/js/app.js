@@ -20051,7 +20051,8 @@ var React = require('react'),
                     width:this.props.width <= 768 ? this.props.width : this.props.width/2+"px",
                     //height:(this.props.height-75)+"px",
                     height:'100%',
-                    zIndex:'998'
+                    zIndex:'998',
+                    overflowScroll:'touch'
                 }
             }
             var bg={
@@ -20066,7 +20067,7 @@ var React = require('react'),
                 }
             }
             return (
-                React.DOM.div({style: style, className: "responsiveSlide"}, 
+                React.DOM.div({style: style, className: "responsiveList"}, 
                     React.DOM.ul({className: "slider", style: bg, dangerouslySetInnerHTML: {__html: this.props.blogTitles}})
                 )
             )
