@@ -19702,22 +19702,20 @@ var Menu = React.createClass({displayName: 'Menu',
         cf.css("left",0);
         b.css("overflow","visible");
 
-        //if(undefined === this.state.scrollPosition) alert("1 no scrollpos");
-        if(undefined === this.state.scrollPosition[1]) alert("2 no scrollpos");
-        if(undefined === this.state.scrollPosition[0]) alert("3 no scrollpos");
-        if(undefined !== this.state.scrollPosition)
+        if(undefined !== this.state.scrollPosition){
             window.scrollTo(this.state.scrollPosition[1], this.state.scrollPosition[0]);
-        this.setState({
-            overflow:true,
-            scrollPosition:{
-                0:this.state.scrollPosition[0],
-                1:this.state.scrollPosition[1]
-            },
-            sliderVisible: false,
-            searchVisible: true,
-            width: 0,
-            height:0
-        });
+            this.setState({
+                overflow:true,
+                scrollPosition:{
+                    0:this.state.scrollPosition[0],
+                    1:this.state.scrollPosition[1]
+                },
+                sliderVisible: false,
+                searchVisible: true,
+                width: 0,
+                height:0
+            });
+        }
     },
     toggleSearchClick: function(){
             var closeNav = this.state.searchVisible ? true : false;
