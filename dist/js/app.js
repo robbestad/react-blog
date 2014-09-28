@@ -19594,8 +19594,16 @@ var Menu = React.createClass({displayName: 'Menu',
     tick: function() {
         var scrollTop = (window.pageYOffset !== undefined) ? window.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop;
         var menuTop = document.getElementById("menu").style.position;
-        this.replaceState({scrollTop: scrollTop, menuTop:menuTop,  width: window.innerWidth,
-            scrollPosition:this.state.scrollPosition,isFetching:this.state.isFetching,searchVisible:this.state.searchVisible,
+        this.replaceState({
+            scrollTop: scrollTop,
+            menuTop:menuTop,
+            width: window.innerWidth,
+            scrollPosition:{
+                    0:this.state.scrollPosition[0],
+                    1:this.state.scrollPosition[1]
+            },
+            isFetching:this.state.isFetching,
+            searchVisible:this.state.searchVisible,
             sliderVisible:this.state.sliderVisible,
             height: window.innerHeight, overflow:this.state.overflow});
 
@@ -19693,12 +19701,17 @@ var Menu = React.createClass({displayName: 'Menu',
         cf.css("height","100%");
         cf.css("left",0);
         b.css("overflow","visible");
-        window.scrollTo(this.state.scrollPosition[1], this.state.scrollPosition[0]);
+
+        //if(undefined === this.state.scrollPosition) alert("1 no scrollpos");
+        if(undefined === this.state.scrollPosition[1]) alert("2 no scrollpos");
+        if(undefined === this.state.scrollPosition[0]) alert("3 no scrollpos");
+        if(undefined !== this.state.scrollPosition)
+            window.scrollTo(this.state.scrollPosition[1], this.state.scrollPosition[0]);
         this.setState({
             overflow:true,
             scrollPosition:{
-                0:0,
-                1:0
+                0:this.state.scrollPosition[0],
+                1:this.state.scrollPosition[1]
             },
             sliderVisible: false,
             searchVisible: true,
@@ -19731,10 +19744,13 @@ var Menu = React.createClass({displayName: 'Menu',
                 cf.css("overflow","hidden");
             }
 
-        this.replaceState({searchVisible: !this.state.searchVisible,scrollPosition:{
-            0:scrollPosition[1],
-            1:scrollPosition[0]
-        }});
+        this.replaceState({
+            searchVisible: !this.state.searchVisible,
+            scrollPosition:{
+                0:scrollPosition[1],
+                1:scrollPosition[0]
+            }
+        });
     },
 
     toggleNavClick: function() {
@@ -19755,10 +19771,10 @@ var Menu = React.createClass({displayName: 'Menu',
             b.css("overflowX","hidden");
             cf.css("display","none");
             if(this.isMobile()){
-                cf.css("position","absolute");
-                cf.css("visibility","hidden");
-                cf.css("overflowY","hidden");
-                cf.css("height",568+"px");
+                //cf.css("position","absolute");
+                //cf.css("visibility","hidden");
+                //cf.css("overflowY","hidden");
+                //cf.css("height",568+"px");
                 window.scrollTo(0, 0);
             } else {
                     cf.animate({
@@ -19767,9 +19783,8 @@ var Menu = React.createClass({displayName: 'Menu',
                         // success
                     });
             }
-                //cf.css("left",width+"px");
-            cf.css("overflow","hidden");
-        }
+            //cf.css("overflow","hidden");
+            }
         this.replaceState({sliderVisible: !this.state.sliderVisible,scrollPosition:{
             0:scrollPosition[1],
             1:scrollPosition[0]
@@ -19875,15 +19890,17 @@ var Menu = React.createClass({displayName: 'Menu',
             width=0;
             height=0;
         }
-
+        var inFront={
+            zIndex:999999
+        }
         return (React.DOM.section(null, 
             React.DOM.div({style: divStyle, id: "menu"}, 
                 React.DOM.ul({style: ulStyle}, 
                     React.DOM.li({style: liStyle, className: "hidden-lg"}, 
-                        React.DOM.div({onClick: this.toggleNavClick, className: "Layout-hamburger fa fa-bars"})
+                        React.DOM.div({onClick: this.toggleNavClick, style: inFront, className: "Layout-hamburger fa fa-bars"})
                     ), 
                     React.DOM.li({style: liFontStyle}, 
-                        React.DOM.div({onClick: this.toggleNavClick}, "Robbestad.com")
+                        React.DOM.div({onClick: this.toggleNavClick, style: inFront}, "Robbestad.com")
                     ), 
                     React.DOM.li({style: liFontStyle}, 
                         React.DOM.div({onClick: this.toggleSearchClick, className: "Layout-search fa fa-search"})
