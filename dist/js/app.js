@@ -19842,7 +19842,8 @@ var Menu = React.createClass({displayName: 'Menu',
             listStyle: 'none outside none',
             margin: '0px',
             padding: '0px',
-            textAlign: 'center'
+            textAlign: 'center',
+            zIndex:'99999'
         };
 
         var liFontStyle = {
