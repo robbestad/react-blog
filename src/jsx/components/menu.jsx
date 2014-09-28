@@ -145,6 +145,7 @@ var Menu = React.createClass({
         cf.css("width",'100%');
         cf.css("visibility","visible");
         cf.css("overflow","visible");
+        cf.css("display","block");
         cf.css("height","100%");
         cf.css("left",0);
         b.css("overflow","visible");
@@ -208,6 +209,7 @@ var Menu = React.createClass({
             var width = this.state.width < 768 ? this.state.width : this.state.width/2;
             //b.css("width",window.innerWidth+"px");
             b.css("overflowX","hidden");
+            cf.css("display","none");
             if(this.isMobile()){
                 cf.css("position","absolute");
                 cf.css("visibility","hidden");
@@ -333,11 +335,11 @@ var Menu = React.createClass({
         return (<section>
             <div style={divStyle} id="menu">
                 <ul style={ulStyle}>
-                    <li onClick={this.toggleNavClick} style={liStyle} className="hidden-lg">
-                        <div   className="Layout-hamburger fa fa-bars" />
+                    <li  style={liStyle} className="hidden-lg">
+                        <div onClick={this.toggleNavClick}   className="Layout-hamburger fa fa-bars" />
                     </li>
-                    <li onClick={this.toggleNavClick}   style={liFontStyle}>
-                        <div   >Robbestad.com</div>
+                    <li  style={liFontStyle}>
+                        <div  onClick={this.toggleNavClick}    >Robbestad.com</div>
                     </li>
                     <li style={liFontStyle}>
                         <div onClick={this.toggleSearchClick} className="Layout-search fa fa-search" />

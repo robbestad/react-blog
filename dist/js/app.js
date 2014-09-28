@@ -19689,6 +19689,7 @@ var Menu = React.createClass({displayName: 'Menu',
         cf.css("width",'100%');
         cf.css("visibility","visible");
         cf.css("overflow","visible");
+        cf.css("display","block");
         cf.css("height","100%");
         cf.css("left",0);
         b.css("overflow","visible");
@@ -19752,6 +19753,7 @@ var Menu = React.createClass({displayName: 'Menu',
             var width = this.state.width < 768 ? this.state.width : this.state.width/2;
             //b.css("width",window.innerWidth+"px");
             b.css("overflowX","hidden");
+            cf.css("display","none");
             if(this.isMobile()){
                 cf.css("position","absolute");
                 cf.css("visibility","hidden");
@@ -19877,11 +19879,11 @@ var Menu = React.createClass({displayName: 'Menu',
         return (React.DOM.section(null, 
             React.DOM.div({style: divStyle, id: "menu"}, 
                 React.DOM.ul({style: ulStyle}, 
-                    React.DOM.li({onClick: this.toggleNavClick, style: liStyle, className: "hidden-lg"}, 
-                        React.DOM.div({className: "Layout-hamburger fa fa-bars"})
+                    React.DOM.li({style: liStyle, className: "hidden-lg"}, 
+                        React.DOM.div({onClick: this.toggleNavClick, className: "Layout-hamburger fa fa-bars"})
                     ), 
-                    React.DOM.li({onClick: this.toggleNavClick, style: liFontStyle}, 
-                        React.DOM.div(null, "Robbestad.com")
+                    React.DOM.li({style: liFontStyle}, 
+                        React.DOM.div({onClick: this.toggleNavClick}, "Robbestad.com")
                     ), 
                     React.DOM.li({style: liFontStyle}, 
                         React.DOM.div({onClick: this.toggleSearchClick, className: "Layout-search fa fa-search"})
