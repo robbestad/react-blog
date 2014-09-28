@@ -85,7 +85,8 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
 <div id="layout"></div>
 <div id="masthead" class="hidden-xs"></div>
 <div id="menu" class="header hidden-sm hidden-md hidden-lg"></div>
-<div id="slider" class="header hidden-sm hidden-md hidden-lg"></div>
+<!--<div id="slider" class="header hidden-sm hidden-md hidden-lg"></div>-->
+<!--<div id="search" class="header hidden-sm hidden-md hidden-lg"></div>-->
 <div class="container-fluid" >
     <div id="react-root"></div>
     <div class="header hidden-xs">
@@ -161,7 +162,7 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
 </body>
 <!-- Contains jQuery, React and compiled js (included jsx) -->
 <script type="text/javascript" src="./js/libs.min.js"></script>
-<script type="text/javascript" src="./js/app.js"></script>
+<script type="text/javascript" src="./js/app.min.js?28sep"></script>
 <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
         (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),

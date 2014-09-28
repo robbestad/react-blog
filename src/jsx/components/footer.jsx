@@ -21,6 +21,7 @@ var React = require('react'),
             bottom:'0px',
             backgroundColor:'#f5f5f5',
             width:'100%',
+            left:'15px',
             height:'35px',
             fontSize:'1.3rem',
             textAlign:'center',
@@ -28,7 +29,7 @@ var React = require('react'),
             marginTop:'35px',
             borderRadius: '5px',
             borderTop: '1px solid #a5a5a5',
-            zIndex:'999',
+            zIndex:'9999',
             marginLeft:'-15px'
     }
     return (

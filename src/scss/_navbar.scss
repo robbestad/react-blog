@@ -14,11 +14,11 @@
   position: fixed;
 }
 
-.Layout-hamburger2 {
-  font-size: 34px;
-  left: 95px;
+.Layout-search {
+  font-size: 28px;
+  right: 15px;
   top: 0;
-  padding: 5px 15px 0 15px;
+  padding: 7px 10px 0 2px;
   position: fixed;
 }
 
@@ -74,6 +74,27 @@ ul.slider{
 
   li{
     border-bottom: 1px solid #d0d0d0;
+    padding: 10px;
+  }
+  h3{
+    font-size: 1.45rem;
+    text-decoration: dashed;
+    margin:0 0 5px 0;
+    padding: 5px;
+  }
+
+}
+
+ul.search{
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  font-size: 1.8rem;
+  display: block;
+  z-index: 0;
+
+  li{
+    border-bottom: none;
     padding: 10px;
   }
   h3{

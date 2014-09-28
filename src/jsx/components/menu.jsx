@@ -2,6 +2,8 @@
  * @jsx React.DOM
  */
 'use strict';
+var Search = require('./search.jsx');
+var Sidebar = require('./sidebar.jsx');
 
 React.initializeTouchEvents(true);
 
@@ -20,7 +22,7 @@ var SetIntervalMixin = {
 var Menu = React.createClass({
     mixins: [SetIntervalMixin], // Use the mixin
     componentDidMount: function() {
-        this.setInterval(this.tick, 1500); // Call a method on the mixin
+        this.setInterval(this.tick, 150); // Call a method on the mixin
         this.fetchBlogData();
     },
 
@@ -33,73 +35,47 @@ var Menu = React.createClass({
           },
           width: document.body.clientWidth,
           height: window.innerHeight,
-            sliderVisible:false
+          sliderVisible:false,
+          searchVisible:false,
+          isFetching:false
         }
     },
-    getInitialProps: function(){
+    getDefaultProps: function(){
       return {
-          blogData: []
+          blogData: [],
+          blogTitles: [],
+          onKeyDown: function(event) { return true; }
       }
     },
     tick: function() {
         var scrollTop = (window.pageYOffset !== undefined) ? window.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop;
         var menuTop = document.getElementById("menu").style.position;
-        this.setState({scrollTop: scrollTop, menuTop:menuTop,  width: window.innerWidth,
-            scrollPosition:this.state.scrollPosition,
+        this.replaceState({scrollTop: scrollTop, menuTop:menuTop,  width: window.innerWidth,
+            scrollPosition:this.state.scrollPosition,isFetching:this.state.isFetching,searchVisible:this.state.searchVisible,
+            sliderVisible:this.state.sliderVisible,
             height: window.innerHeight, overflow:this.state.overflow});
-        //this.setProps({blogData: this.props.blogData});
-        if(undefined === this.props.blogData) {
-            this.fetchBlogData();
-        }
 
-        //this.setWidthOfSlider();
+        if(undefined === this.props.getBlogTitles)
+            this.setProps({ blogData: this.props.blogData, blogTitles: this.getBlogTitles()});
 
 
     },
-    setWidthOfSlider:function(){
-        if(this.state.overflow===false) {
-            //var slider = $("#slider");
-            //var width = this.state.width <= 640 ? this.state.width : this.state.width / 2;
-            //slider.css("width", width + "px");
 
-        var slider=$("#slider");
-        var width = this.state.width <= 640 ? this.state.width : this.state.width/2;
-        //slider.css("width",width+"px");
-
-        var isPhone=false;
-        if(window.screen.width<=320){
-            isPhone=true;
-        }
-
-        if(!isPhone){
-            slider.animate({
-                height: (this.state.height-75)+"px",
-                width: width+"px"
-            }, 100, function(){
-                // suksess
-            });
-        } else {
-            slider.css("top","40px");
-            slider.css("height",this.state.height-75+"px");
-            slider.css("width",width+"px");
-        }
-        }
-
-    },
     onResize: function(){
-            this.setState({
-                overflow:this.state.overflow,
-                scrollPosition:{
-                    0:this.state.scrollPosition[0],
-                    1:this.state.scrollPosition[1]
-                },
-                sliderVisible: this.state.sliderVisible,
-                width: window.innerWidth,
-                height:window.innerHeight
-            });
+        this.replaceState({ width: window.innerWidth,
+            height:window.innerHeight,searchVisible:this.state.searchVisible,
+            sliderVisible:this.state.sliderVisible});
 
-            this.setWidthOfSlider();
-
+            if(window.innerWidth>=768){
+                if(this.state.searchVisible){
+                    this.toggleSearchClick();
+                }
+                if(this.state.sliderVisible){
+                    this.toggleNavClick();
+                }
+                if(this.state.sliderVisible || this.state.sliderVisible)
+                    this.replaceState({searchVisible: false, sliderVisible: false });
+            }
         },
     addResizeAttach: function() {
         if(window.attachEvent) {
@@ -133,7 +109,7 @@ var Menu = React.createClass({
             success:function(data,text,xhqr){
                 $.each(data, function(i, item) {
                     if("object" === typeof item["robbestad"] ){
-                        react.setProps({ blogData: item["robbestad"]});
+                        react.setProps({ blogData: item["robbestad"], blogTitles: react.getBlogTitles()});
                     }
                 });
             }
@@ -154,103 +130,104 @@ var Menu = React.createClass({
             return 'Loading';
         }
     },
-    toggleNavClick: function () {
+    isMobile: function(){
         var isPhone=false;
-            if(window.screen.width<=640){
+        if(window.screen.width<768){
             isPhone=true;
         }
+        return isPhone;
+    },
+    resetContainer: function(){
+        var b=$("body");
+        var cf=$(".container-fluid");
 
-        if(this.state.overflow){
-            // lock scroll position, but retain settings for later
+        cf.css("position","relative");
+        cf.css("width",'100%');
+        cf.css("visibility","visible");
+        cf.css("overflow","visible");
+        cf.css("height","100%");
+        cf.css("left",0);
+        b.css("overflow","visible");
+        window.scrollTo(this.state.scrollPosition[1], this.state.scrollPosition[0]);
+        this.setState({
+            overflow:true,
+            scrollPosition:{
+                0:0,
+                1:0
+            },
+            sliderVisible: false,
+            searchVisible: true,
+            width: 0,
+            height:0
+        });
+    },
+    toggleSearchClick: function(){
+            var closeNav = this.state.searchVisible ? true : false;
+            var b=$("body");
+            var cf=$(".container-fluid");
             var scrollPosition = [
                 self.pageXOffset || document.documentElement.scrollLeft || document.body.scrollLeft,
                 self.pageYOffset || document.documentElement.scrollTop  || document.body.scrollTop
             ];
-
-            if(isPhone){
-                window.scrollTo(scrollPosition[0], scrollPosition[1]);
-                $("body").css("position","fixed");
-            }
-
-
-            this.setState({
-                overflow:false,
-                scrollPosition:{
-                    0:window.document.body.scrollTop,
-                    1:0
-                },
-                sliderVisible: true,
-                width: window.innerWidth,
-                height:window.innerHeight
-            });
-            $("body").css("overflow","hidden");
-
-            $(".container-fluid").css("overflow","hidden");
-            //var width = this.state.width <= 320 ? 320 : this.state.width <= 568? 568 : this.state.width/2;
-            var width = this.state.width <= 640 ? this.state.width : this.state.width/2;
-
-            var slider=$("#slider");
-            slider.css("display","block");
-            slider.css("backgroundColor","#e0e0e0");
-            slider.css("height","0px");
-            slider.css("width","0px");
-            slider.css("position","absolute");
-            slider.css("left","0");
-            slider.css("overflow","scroll");
-                slider.css("zIndex","998");
-            if(!isPhone){
-                slider.css("top",(scrollPosition[1]+40)+"px");
-                slider.animate({
-                height: (this.state.height-75)+"px",
-                width: width+"px"
-            }, 100, function(){
-                // suksess
-            });
+            if(closeNav){
+                this.resetContainer();
             } else {
-                slider.css("top","40px");
-                slider.css("height",this.state.height-75+"px");
-                slider.css("width",width+"px");
+                var width = this.state.width < 768 ? this.state.width : this.state.width/2;
+                //b.css("width",window.innerWidth+"px");
+                b.css("overflowX","hidden");
+                if(this.isMobile()){
+                    cf.css("position","absolute");
+                    cf.css("visibility","hidden");
+                    cf.css("overflowY","hidden");
+                    cf.css("height",568+"px");
+                    window.scrollTo(0, 0);
+                } else
+                    cf.css("right",width+"px");
+                cf.css("overflow","hidden");
             }
 
+        this.replaceState({searchVisible: !this.state.searchVisible,scrollPosition:{
+            0:scrollPosition[1],
+            1:scrollPosition[0]
+        }});
+    },
 
+    toggleNavClick: function() {
+        var closeNav = this.state.sliderVisible ? true : false;
+        var b=$("body");
+        var cf=$(".container-fluid");
+        var scrollPosition = [
+            self.pageXOffset || document.documentElement.scrollLeft || document.body.scrollLeft,
+            self.pageYOffset || document.documentElement.scrollTop  || document.body.scrollTop
+        ];
 
+        if(closeNav){
+            this.resetContainer();
         } else {
-            // un-lock scroll position
-            var html = jQuery('html');
-            var scrollPosition = html.data('scroll-position');
-            html.css('overflow', html.data('previous-overflow'));
-            $("body").css("overflow","visible");
-            $(".container-fluid").css("overflow","visible");
-            $("body").css("position","relative");
-           // $("body").css("position","");
 
-            window.scrollTo(this.state.scrollPosition[1], this.state.scrollPosition[0])
-
-            this.setState({
-                overflow:true,
-                scrollPosition:{
-                    0:window.document.body.scrollTop,
-                    1:0
-                },
-                sliderVisible: false,
-                width: window.innerWidth,
-                height:window.innerHeight
-            });
-            var slider=$("#slider");
-            if(!isPhone){
-            slider.animate({
-                height: "0px",
-                width: "0px"
-            }, 100, function(){
-                // suksess
-                $("#slider").css("zIndex","0");
-            });
+            var width = this.state.width < 768 ? this.state.width : this.state.width/2;
+            //b.css("width",window.innerWidth+"px");
+            b.css("overflowX","hidden");
+            if(this.isMobile()){
+                cf.css("position","absolute");
+                cf.css("visibility","hidden");
+                cf.css("overflowY","hidden");
+                cf.css("height",568+"px");
+                window.scrollTo(0, 0);
             } else {
-                //slider.css("zIndex",0);
-                slider.css("width",0);
+                    cf.animate({
+                        width: width+"px"
+                    }, 250, function(){
+                        // success
+                    });
             }
+                //cf.css("left",width+"px");
+            cf.css("overflow","hidden");
         }
-
+        this.replaceState({sliderVisible: !this.state.sliderVisible,scrollPosition:{
+            0:scrollPosition[1],
+            1:scrollPosition[0]
+        }});
 
     },
 
@@ -260,13 +237,38 @@ var Menu = React.createClass({
         var padding=31;
         var opacity = this.state.scrollTop/reduceFactor <= 1.0 ? this.state.scrollTop/reduceFactor > 0.0 ? this.state.scrollTop/reduceFactor : 0.0 : 1.0;
 
-        var slider=$("#slider");
-        if(this.state.sliderVisible){
-            slider.css("height",(this.state.height - 75) + "px");
-            slider.html("<ul class='slider'>" +
-            this.getBlogTitles() +
-            "</ul>");
+        if(window.innerWidth>=768){
+            var b=$("body");
+            var cf=$(".container-fluid");
+            cf.css("position","relative");
+            cf.css("width", b.width()+"px");
+            cf.css("visibility","visible");
+            cf.css("overflow","visible");
+            cf.css("left",0);
+            cf.css("height","100%");
+            b.css("overflow","visible");
         }
+
+        //var slider=$("#slider");
+        //if(this.state.sliderVisible){
+        //    slider.css("height",(this.state.height - 75) + "px");
+        //    slider.html("<ul class='slider'>" +
+        //    this.getBlogTitles() +
+        //    "</ul>");
+        //}
+
+        //var search=$("#search");
+        //if(this.state.searchVisible){
+        //    search.css("height",(this.state.height - 75) + "px");
+        //    search.html("<ul class='search'>" +
+        //    "<li key=\"1\"> search now</li>" +
+        //    "<li key=\"1\"> <input ref=\"entry\" " +
+        //    " onChange={this._onTextEntryUpdated}" +
+        //    " value=\""+this.state.value+"\" " +
+        //    " type=\"text\" onKeyDown={this._onKeyDown} ></li>" +
+        //    "</ul>");
+        //}
+
 
         $(".mainRow").css("paddingTop",padding+'px');
         var divStyle= {
@@ -316,21 +318,37 @@ var Menu = React.createClass({
 
         };
 
+        var searchVisible=this.state.searchVisible;
+        var sliderVisible=this.state.sliderVisible;
+        var width=this.state.width;
+        var height=this.state.height;
+        if(window.innerWidth>=768) {
+            searchVisible=false;
+            sliderVisible=false;
+            width=0;
+            height=0;
+        }
 
-        return <section style={divStyle} id="menu">
-            <div>
+        return (<section>
+            <div style={divStyle} id="menu">
                 <ul style={ulStyle}>
                     <li onClick={this.toggleNavClick} style={liStyle} className="hidden-lg">
-                        <div onClick={this.toggleNavClick} className="Layout-hamburger fa fa-bars" />
+                        <div   className="Layout-hamburger fa fa-bars" />
                     </li>
                     <li onClick={this.toggleNavClick}   style={liFontStyle}>
-                        <div onClick={this.toggleNavClick}   >Robbestad.com</div>
+                        <div   >Robbestad.com</div>
                     </li>
-                    <li style={liFontStyle}><a href="/index.php?content=about#nosplash" style={aFontStyleMini}>About</a>
+                    <li style={liFontStyle}>
+                        <div onClick={this.toggleSearchClick} className="Layout-search fa fa-search" />
                     </li>
                 </ul>
             </div>
-        </section>;
+            <Search height={height} width={width}
+                visible={searchVisible}  />
+            <Sidebar height={height} width={width}
+                visible={sliderVisible} blogTitles={this.props.blogTitles} />
+        </section>
+        );
 
     }
 });
