@@ -15,6 +15,18 @@
   -webkit-animation-duration: 2s;
   animation-duration: 2s;
 }
+//
+//@keyframes bezierIn {
+//  0% {
+//    opacity: 1;
+//  }
+//  50% {
+//    transition: all 500ms cubic-bezier(0.160, 0.995, 0.925, 0.125);
+//    transition-timing-function: cubic-bezier(0.160, 0.995, 0.925, 0.125);
+//  }
+//
+//}
+
 
 @keyframes bounceIn {
   0%, 20%, 40%, 60%, 80%, 100% {
@@ -82,6 +94,13 @@
   animation-name: bounceOut;
   animation-duration: .75s;
 }
+//
+//.bezierIn {
+//  -webkit-animation-name: bezierIn;
+//  animation-name: bezierIn;
+//  -webkit-animation-duration: .75s;
+//  animation-duration: .75s;
+//}
 
 .bounceIn {
   -webkit-animation-name: bounceIn;

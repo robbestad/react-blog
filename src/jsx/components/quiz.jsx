@@ -37,12 +37,14 @@ var React = require('react'),
 
         registerAnswer: function(question,answer) {
            // this.answers.push(answer);
-            $(".spm").css("opacity",0.5);
-            $(".spm").attr("disabled", "disabled");
+           // $(".spm").css("opacity",0.5);
+           // $(".spm").attr("disabled", "disabled");
         },
 
         getQuizFromApi: function(id) {
-        var react=this;
+        var react = this;
+        var spm = $(".spm");
+        var question = $(".questionTitle");
         $.getJSON( "http://api.robbestad.com/programmingquiz/"+id, function( data ) {
             react.setState({
                 question:data.question,
@@ -55,28 +57,64 @@ var React = require('react'),
                 answer5:data.answer5
             });
                 Rainbow.color($(".questionTitle"));
+            question.addClass("animated bounceIn");
+                spm.css("opacity",1);
+                question.css("opacity",1);
+                spm.addClass("animated bounceIn");
+
+                //spm.animate(function(){
+                //
+                //})
+
+            setTimeout(function () {
+                    question.removeClass("bounceIn");
+                    question.removeClass("animated");
+                    spm.removeClass("animated");
+                    spm.removeClass("bounceIn");
+                    spm.css("disabled","");
+                }, 500);
+
 
             });
         },
 
         quizClick: function(e){
+            var react = this;
             var cssId=$("#"+e.target.id);
-            var spmCls=$(".spm");
+            var spm=$(".spm");
+            var question=$(".questionTitle");
             if((cssId.css("disabled") === "disabled"
-             || spmCls.css("disabled") === "disabled")){
+             || spm.css("disabled") === "disabled")){
                 return void 0;
             }
             //console.log(e.target.name);
             //console.log(e.target.id);
 
                     cssId.css("disabled","disabled");
-                    spmCls.css("disabled","disabled");
-                    cssId.addClass("animate bounceOut").delay(550).queue(function(){
+                    spm.css("disabled","disabled");
+                    cssId.addClass("animated bounceOut");
+                    //spm.css("opacity",0.5);
+                    setTimeout(function () {
                         cssId.css("opacity",0);
-                            spmCls.addClass("animate bounceOut").delay(550).queue(function() {
-                                spmCls.css("opacity",0);
-                            });
-                    });
+                        spm.addClass("animated bounceOut");
+                    }, 500);
+
+                    setTimeout(function () {
+                        spm.css("opacity",0);
+                        cssId.removeClass("animated bounceOut");
+                        spm.removeClass("animated bounceOut");
+                        question.addClass("animated bounceOut");
+
+                    }, 750);
+
+                    setTimeout(function () {
+                        question.css("opacity",0);
+                        question.removeClass("animated bounceOut");
+                    }, 1250);
+
+                    setTimeout(function () {
+                       react.getQuizFromApi(1);
+                    }, 1500);
         },
 
         componentDidMount: function(){
@@ -90,11 +128,6 @@ var React = require('react'),
                 var answer=($(this).attr("key"));
                 react.registerAnswer(question,answer)
 
-                //// UI
-                //$(this).addClass("animate bounceOut").delay(750).queue(function(){
-                //    $(this).css("opacity",0);
-                //    $(".spm").css("opacity",1);
-                //});
             });
 
             var padding={
@@ -110,8 +143,10 @@ var React = require('react'),
             return (
                 <div >
                 <section>
-                    <h1 >Quiz
-                        <span className="pull-right points">0</span>
+                    <h1>
+                        <span className="timer">15:00</span>
+                        <span className="points">0</span>
+                        <span className="title">Quiz</span>
                     </h1>
                     <div className="quizhead">
                         <h3 className="questionTitle rainbow">
