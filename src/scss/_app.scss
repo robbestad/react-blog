@@ -13,7 +13,7 @@ pre{
 }
 
 html, body {
-  height: 100%!important;
+//  height: 100%!important;
   /* The html and body elements cannot have any padding or margin. */
   background-color: white;
   font-family: 'Open Sans',sans-serif;
@@ -49,6 +49,12 @@ a{
   background-color: white;
   padding: 10px 10px 40px 20px;
   border-radius: 5px 0 0 0;
+}
+
+@media only screen and (min-width: 1140px) {
+  .article{
+    border-radius: 5px 5px 0 0;
+  }
 }
 
 .article{

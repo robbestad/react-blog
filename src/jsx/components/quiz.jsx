@@ -105,14 +105,21 @@ var React = require('react'),
                 wordBreak: 'break-all'
             };
 
+
+
             return (
-                <div className="myQuiz">
+                <div >
+                <section>
+                    <h1 >Quiz
+                        <span className="pull-right points">0</span>
+                    </h1>
                     <div className="quizhead">
                         <h3 className="questionTitle rainbow">
                             {this.state.question}
                             <pre><code data-language={this.state.programmingLanguage}>{this.state.code}</code></pre>
                         </h3>
                     </div>
+                    <div>
                     <ul className="quiz" value="spørsmål 1">
                         <li value="1" style={padding}>
                             <input onClick={this.quizClick} id="answer1"  name="answer1" className="quizQuestion spm" style={input} type="button" key="1" value={this.state.answer1} />
@@ -127,6 +134,8 @@ var React = require('react'),
                             <input onClick={this.quizClick} id="answer4"  name="answer4" className="quizQuestion spm" style={input} type="button" key="4" value={this.state.answer4} />
                             </li>
                     </ul>
+                    </div>
+                </section>
 
                 </div>
             )

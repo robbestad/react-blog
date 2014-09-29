@@ -85,9 +85,7 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
 <div id="layout"></div>
 <div id="masthead" class="hidden-xs"></div>
 <div id="menu" class="header hidden-sm hidden-md hidden-lg"></div>
-<!--<div id="slider" class="header hidden-sm hidden-md hidden-lg"></div>-->
-<!--<div id="search" class="header hidden-sm hidden-md hidden-lg"></div>-->
-<div class="container-fluid" >
+<div class="container-fluid"     >
     <div id="react-root"></div>
     <div class="header hidden-xs">
         <ul class="nav nav-pills pull-right">
@@ -100,22 +98,19 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
         </a>
     </div>
     <div class="row">
-        <div class="col-md-3 col-sm-4 col-lg-3 hidden-xs sidebar">
+        <div class="col-md-3 col-sm-3 hidden-xs sidebar">
             <?php foreach ($data["_embedded"]["robbestad"] as $item) {
                     echo '<h2><a
                     href="/index.php?id=' . $item["id"] . '#nosplash">' . ($item["title"] . '</a></h2><hr>');
             }
             ?>
         </div>
-        <div class="article col-sm-8 col-md-9 col-lg-10 col-xs-12">
+        <div class="article col-sm-9 col-md-10 col-xs-12">
 
             <?php
             if(!empty($_GET["page"]) && $_GET["page"] === "quiz") {
                 ?>
                 <div class="innerXsPadding">
-                    <h1 class="myQuiz">Quiz</h1>
-                    <p>Take the programming quiz... or some better text...
-                    Take the programming quiz... or some better text... </p>
                     <div id="quiz"></div>
                 </div>
 
@@ -167,6 +162,7 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
         </div>
             <?php } ?>
         </div>
+
     </div>
     </div>
     <!-- /div.container -->

@@ -20037,9 +20037,9 @@ var React = require('react'),
 
                     cssId.css("disabled","disabled");
                     spmCls.css("disabled","disabled");
-                    cssId.addClass("animate bounceOut").delay(750).queue(function(){
+                    cssId.addClass("animate bounceOut").delay(550).queue(function(){
                         cssId.css("opacity",0);
-                            spmCls.addClass("animate bounceOut").delay(750).queue(function() {
+                            spmCls.addClass("animate bounceOut").delay(550).queue(function() {
                                 spmCls.css("opacity",0);
                             });
                     });
@@ -20071,14 +20071,21 @@ var React = require('react'),
                 wordBreak: 'break-all'
             };
 
+
+
             return (
-                React.DOM.div({className: "myQuiz"}, 
+                React.DOM.div(null, 
+                React.DOM.section(null, 
+                    React.DOM.h1(null, "Quiz", 
+                        React.DOM.span({className: "pull-right points"}, "0")
+                    ), 
                     React.DOM.div({className: "quizhead"}, 
                         React.DOM.h3({className: "questionTitle rainbow"}, 
                             this.state.question, 
                             React.DOM.pre(null, React.DOM.code({'data-language': this.state.programmingLanguage}, this.state.code))
                         )
                     ), 
+                    React.DOM.div(null, 
                     React.DOM.ul({className: "quiz", value: "spørsmål 1"}, 
                         React.DOM.li({value: "1", style: padding}, 
                             React.DOM.input({onClick: this.quizClick, id: "answer1", name: "answer1", className: "quizQuestion spm", style: input, type: "button", key: "1", value: this.state.answer1})
@@ -20093,6 +20100,8 @@ var React = require('react'),
                             React.DOM.input({onClick: this.quizClick, id: "answer4", name: "answer4", className: "quizQuestion spm", style: input, type: "button", key: "4", value: this.state.answer4})
                             )
                     )
+                    )
+                )
 
                 )
             )
