@@ -62,6 +62,27 @@
   }
 }
 
+@keyframes bounceOut {
+  20% {
+    transform: scale3d(.9, .9, .9);
+  }
+
+  50%, 55% {
+    opacity: 1;
+    transform: scale3d(1.1, 1.1, 1.1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale3d(.3, .3, .3);
+  }
+}
+
+.bounceOut {
+  animation-name: bounceOut;
+  animation-duration: .75s;
+}
+
 .bounceIn {
   -webkit-animation-name: bounceIn;
   animation-name: bounceIn;

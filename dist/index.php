@@ -102,14 +102,25 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
     <div class="row">
         <div class="col-md-3 col-sm-4 col-lg-3 hidden-xs sidebar">
             <?php foreach ($data["_embedded"]["robbestad"] as $item) {
-                echo '<h2><a
+                    echo '<h2><a
                     href="/index.php?id=' . $item["id"] . '#nosplash">' . ($item["title"] . '</a></h2><hr>');
             }
             ?>
         </div>
         <div class="article col-sm-8 col-md-9 col-lg-10 col-xs-12">
-            <div id="quiz"></div>
+
             <?php
+            if(!empty($_GET["page"]) && $_GET["page"] === "quiz") {
+                ?>
+                <div class="innerXsPadding">
+                    <h1 class="myQuiz">Quiz</h1>
+                    <p>Take the programming quiz... or some better text...
+                    Take the programming quiz... or some better text... </p>
+                    <div id="quiz"></div>
+                </div>
+
+            <?php
+            } else
             if(!empty($_GET["content"])){ ?>
                 <div class="innerXsPadding">
                     <h1>About</h1>
@@ -163,7 +174,7 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
 </body>
 <!-- Contains jQuery, React and compiled js (included jsx) -->
 <script type="text/javascript" src="./js/libs.min.js?2809b"></script>
-<script type="text/javascript" src="./js/app.js?2909_0.0.2"></script>
+<script type="text/javascript" src="./js/app.js?2909_0.0.3"></script>
 <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
         (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),

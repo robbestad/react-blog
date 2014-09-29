@@ -19601,6 +19601,7 @@ var Menu = React.createClass({displayName: 'Menu',
     tick: function() {
         var scrollTop = (window.pageYOffset !== undefined) ? window.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop;
         var menuTop = document.getElementById("menu").style.position;
+        if(undefined !== this.state.scrollPosition){
         this.replaceState({
             scrollTop: scrollTop,
             menuTop:menuTop,
@@ -19613,7 +19614,7 @@ var Menu = React.createClass({displayName: 'Menu',
             searchVisible:this.state.searchVisible,
             sliderVisible:this.state.sliderVisible,
             height: window.innerHeight, overflow:this.state.overflow});
-
+        }
         if(undefined === this.props.getBlogTitles)
             this.setProps({ blogData: this.props.blogData, blogTitles: this.getBlogTitles()});
 
@@ -19970,6 +19971,19 @@ module.exports = Mycomponent;
 var React = require('react'),
 
     Quiz = React.createClass({displayName: 'Quiz',
+        getInitialState: function(){
+
+            return {
+                question:"",
+                answer1:"",
+                answer2:"",
+                answer3:"",
+                answer4:"",
+                answer5:"",
+                programmingLanguage:"",
+                code:""
+            }
+        },
 
         sarQuiz: function(quizName){
             this.quizName = quizName;
@@ -19988,62 +20002,98 @@ var React = require('react'),
         },
 
         registerAnswer: function(question,answer) {
-            this.answers.push(answer);
+           // this.answers.push(answer);
             $(".spm").css("opacity",0.5);
             $(".spm").attr("disabled", "disabled");
         },
 
-        getQuizFromApi: function(id, h1) {
+        getQuizFromApi: function(id) {
+        var react=this;
         $.getJSON( "http://api.robbestad.com/programmingquiz/"+id, function( data ) {
-                console.log(data);
-                //data.language='php';
-                //var q = data.question.replace("[code]", "<pre><code data-language=\""+data.language+"\">");
-                //q = q.replace("[/code]","</code></pre>");
-                //h1.innerHTML=q;
-                //Rainbow.color($(".questionTitle"));
-                //return data.question;
+            react.setState({
+                question:data.question,
+                code:data.code,
+                programmingLanguage:data.programmingLanguage,
+                answer1:data.answer1,
+                answer2:data.answer2,
+                answer3:data.answer3,
+                answer4:data.answer4,
+                answer5:data.answer5
             });
+                Rainbow.color($(".questionTitle"));
+
+            });
+        },
+
+        quizClick: function(e){
+            var cssId=$("#"+e.target.id);
+            var spmCls=$(".spm");
+            if((cssId.css("disabled") === "disabled"
+             || spmCls.css("disabled") === "disabled")){
+                return void 0;
+            }
+            //console.log(e.target.name);
+            //console.log(e.target.id);
+
+                    cssId.css("disabled","disabled");
+                    spmCls.css("disabled","disabled");
+                    cssId.addClass("animate bounceOut").delay(750).queue(function(){
+                        cssId.css("opacity",0);
+                            spmCls.addClass("animate bounceOut").delay(750).queue(function() {
+                                spmCls.css("opacity",0);
+                            });
+                    });
         },
 
         componentDidMount: function(){
-            this.getQuizFromApi(1,$("h1.questionTitle")[0]);
+            this.getQuizFromApi(1);
         },
 
         render: function() {
+            var react = this;
             $('.spm').click(function(){
                 var question=($(this).parent().attr("value"));
                 var answer=($(this).attr("key"));
-                this.registerAnswer(question,answer)
+                react.registerAnswer(question,answer)
 
-                // UI
-                $(this).addClass("animate bounceOut").delay(750).queue(function(){
-                    $(this).css("opacity",0);
-                    $(".spm").css("opacity",1);
-                });
+                //// UI
+                //$(this).addClass("animate bounceOut").delay(750).queue(function(){
+                //    $(this).css("opacity",0);
+                //    $(".spm").css("opacity",1);
+                //});
             });
 
+            var padding={
+                padding:'5px'
+            };
+
+            var input={
+                wordBreak: 'break-all'
+            };
 
             return (
-                React.DOM.div({className: "Quiz"}, 
-                    React.DOM.h1(null, "Quiz"), 
-
+                React.DOM.div({className: "myQuiz"}, 
                     React.DOM.div({className: "quizhead"}, 
-                        React.DOM.h1({className: "questionTitle"}, "Question 1")
+                        React.DOM.h3({className: "questionTitle rainbow"}, 
+                            this.state.question, 
+                            React.DOM.pre(null, React.DOM.code({'data-language': this.state.programmingLanguage}, this.state.code))
+                        )
                     ), 
                     React.DOM.ul({className: "quiz", value: "spørsmål 1"}, 
-                        React.DOM.li({value: "1"}, 
-                            React.DOM.input({className: "a spm", type: "button", key: "1", value: "Svar 1"})
+                        React.DOM.li({value: "1", style: padding}, 
+                            React.DOM.input({onClick: this.quizClick, id: "answer1", name: "answer1", className: "quizQuestion spm", style: input, type: "button", key: "1", value: this.state.answer1})
                             ), 
-                        React.DOM.li({value: "2"}, 
-                            React.DOM.input({className: "a spm", type: "button", key: "2", value: "Svar 2"})
+                        React.DOM.li({value: "2", style: padding}, 
+                            React.DOM.input({onClick: this.quizClick, id: "answer2", name: "answer2", className: "quizQuestion spm", style: input, type: "button", key: "2", value: this.state.answer2})
                             ), 
-                        React.DOM.li({value: "3"}, 
-                            React.DOM.input({className: "a spm", type: "button", key: "3", value: "Svar 3"})
+                        React.DOM.li({value: "3", style: padding}, 
+                            React.DOM.input({onClick: this.quizClick, id: "answer3", name: "answer3", className: "quizQuestion spm", style: input, type: "button", key: "3", value: this.state.answer3})
                             ), 
-                        React.DOM.li({value: "4"}, 
-                            React.DOM.input({className: "a spm", type: "button", key: "4", value: "Svar 4"})
+                        React.DOM.li({value: "4", style: padding}, 
+                            React.DOM.input({onClick: this.quizClick, id: "answer4", name: "answer4", className: "quizQuestion spm", style: input, type: "button", key: "4", value: this.state.answer4})
                             )
                     )
+
                 )
             )
         }

@@ -50,6 +50,7 @@ var Menu = React.createClass({
     tick: function() {
         var scrollTop = (window.pageYOffset !== undefined) ? window.pageYOffset : (document.documentElement || document.body.parentNode || document.body).scrollTop;
         var menuTop = document.getElementById("menu").style.position;
+        if(undefined !== this.state.scrollPosition){
         this.replaceState({
             scrollTop: scrollTop,
             menuTop:menuTop,
@@ -62,7 +63,7 @@ var Menu = React.createClass({
             searchVisible:this.state.searchVisible,
             sliderVisible:this.state.sliderVisible,
             height: window.innerHeight, overflow:this.state.overflow});
-
+        }
         if(undefined === this.props.getBlogTitles)
             this.setProps({ blogData: this.props.blogData, blogTitles: this.getBlogTitles()});
 

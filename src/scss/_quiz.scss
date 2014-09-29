@@ -1,19 +1,36 @@
 
-quiz.ul{
+#quiz ul{
   list-style:none;
   margin:0;
   padding:0;
-  input{
-    border-radius: 5px;
-    padding:10px;
+  .quizQuestion{
     margin:5px;
     border:1px solid green;
-    width:150px;
-    background-color:wheat;
+    min-width:150px;
+    width:100%;
+    border-radius: 5px;
+    padding: 10px;
+    background: wheat;
+    transition: all .2s ease-in-out;
+//    @include arrow-lazy($color: #277ca3);
+    &:hover {
+      background: green;
+      color: white;
+      border-color: white;
+    }
   }
+
   li{
     float:left;
   }
+}
+h1.myQuiz{
+  text-align: center;
+  background: #f1f0f1;
+  border-bottom: 1px solid #f3f3f3;
+  border-radius: 5px;
+  padding:10px;
+  margin-top:15px;
 }
 @mixin arrow-lazy($direction: top, $size: 10px, $color: #ccc, $center: 50%, $margin: -1px, $pseudo: before){
   position: relative;
@@ -66,34 +83,32 @@ quiz.ul{
 }
 }
 
-.quiz {
+.myQuiz {
   margin: 20px auto;
-  width: 320px;
+  max-width: 480px;
 }
 
-.a {
-  background: wheat;
-  transition: all .2s ease-in-out;
-  @include arrow-lazy($color: #277ca3);
-
-  &:hover {
-    background: green;
-    color: white;
-    border-color: white;
+@media only screen and (max-width : 320px) {
+  .myQuiz {
+    margin: 0 auto;
+    max-width: 320px;
+    overflow-x: hidden;
   }
 }
-.b {
-  background: #666;
-  @include arrow-lazy(down, $color: #666, $margin: 5px);
-}
-.c {
-  background: #39322f;
-  @include arrow-lazy(left, 6px, #39322f, 70%);
-}
-.d {
-  background: #b35d3c;
-  @include arrow-lazy(right, 25px, #b35d3c, $margin: 0);
-}
+
+
+//.b {
+//  background: #666;
+//  @include arrow-lazy(down, $color: #666, $margin: 5px);
+//}
+//.c {
+//  background: #39322f;
+//  @include arrow-lazy(left, 6px, #39322f, 70%);
+//}
+//.d {
+//  background: #b35d3c;
+//  @include arrow-lazy(right, 25px, #b35d3c, $margin: 0);
+//}
 
 
 //
@@ -101,25 +116,13 @@ quiz.ul{
 //  background: #faf9ea;
 //  text-align: center;
 //}
-//.masthead {
-//  /*
-//  background: #b35d3c;
-//  border-bottom: 1px solid #673521;
-//    border-radius: 5px;
-//*/
-//  border-radius: 5px;
-//  padding:10px;
-//  margin:5px;
-//  border:1px solid green;
-//}
-//h1 {
-//  display: inline-block;
-//  padding: 15px 20px;
-//  margin: 20px auto;
-//  background: transparent;
-//  //@include arrow-lazy(down, 15px, #000);
-//  font-family: Helvetica, Arial, sans-serif;
-//  font-weight: normal;
-//  font-size: 1.5rem;
-//  border-radius: 5px;
-//}
+.questionTitle{
+  display: block;
+  margin: 0 auto;
+  text-align: left;
+  background: transparent;
+  font-weight: normal;
+  font-size: 1.5rem;
+  border-radius: 5px;
+
+}
