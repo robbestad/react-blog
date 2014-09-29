@@ -223,20 +223,22 @@ gulp.task('browserSync', function () {
 
 // Rerun the task when a file changes
 gulp.task('watch', function () {
-    gulp.watch(paths.scripts, ['jscripts']);
-    gulp.watch('src/jsx/**/*', ['jscripts']);
-    gulp.watch('src/js/blogdata.js', ['regularjs']);
-    gulp.watch(paths.jsx, ['minifyapp']);
-    gulp.watch(paths.scss, ['css']);
+    //gulp.watch(paths.scripts, ['jscripts']);
+    //gulp.watch('src/jsx/**/*', ['jscripts']);
+    //gulp.watch('src/js/blogdata.js', ['regularjs']);
+    //gulp.watch(paths.jsx, ['minifyapp']);
+    //gulp.watch(paths.scss, ['css']);
+    //gulp.watch(paths.php, ['php2html']);
+
+    gulp.watch(['src/jsx/**/*','src/js/blogdata.js'], ['minifyapp']);
     gulp.watch('src/scss/**/*', ['css']);
     gulp.watch(paths.html, ['html']);
-    gulp.watch(paths.php, ['php2html']);
     gulp.watch(paths.php, ['php']);
     gulp.watch(paths.images, ['images']);
 });
 
 // gulp main tasks
-gulp.task('default', ['css','minifyapp','images','jslibs','php', 'php2html']);
+gulp.task('default', ['css','minifyapp','images','jslibs','php']);
 gulp.task('watchify', ['default', 'watch']);
 gulp.task('serve', ['watchify', 'browserSync']);
 gulp.task('heroku', ['default', 'push']);

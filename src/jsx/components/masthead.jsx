@@ -64,15 +64,16 @@ var React = require('react'),
         var modifier = Math.abs(this.props.scrollTop/reducify);
         var opacity = 1-modifier > 0 ? 1-(modifier) : 0;
         opacity = this.props.scrollTop > 0 ? 1 : opacity;
-        if(this.props.dontShow === true){
-            opacity=0;
-        }
         opacity=(opacity-(1-this.state.countdown));
         var z = opacity > 0.01 ? 90 : 0;
         //var display = z === -1 ? 'none' : 'block';
         var width = z === -1 ? 0 : window.innerWidth;
         var height = z === -1 ? 0 : window.innerHeight;
         //console.log(height+ "x" + width + ":" + opacity + ":" +z +">"+this.props.dontShow);
+        if(this.props.dontShow === true){
+            opacity=0;
+        }
+
         var divStyle= {
             position: 'fixed',
             //top: this.props.scrollTop,

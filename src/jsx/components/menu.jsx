@@ -221,23 +221,18 @@ var Menu = React.createClass({
         } else {
 
             var width = this.state.width < 768 ? this.state.width : this.state.width/2;
-            //b.css("width",window.innerWidth+"px");
             b.css("overflowX","hidden");
-            cf.css("display","none");
+            cf.css("position","fixed");
             if(this.isMobile()){
-                //cf.css("position","absolute");
-                //cf.css("visibility","hidden");
-                //cf.css("overflowY","hidden");
-                //cf.css("height",568+"px");
                 window.scrollTo(0, 0);
+                cf.css("display","none");
             } else {
                     cf.animate({
                         width: width+"px"
-                    }, 250, function(){
+                    }, 500, function(){
                         // success
                     });
             }
-            //cf.css("overflow","hidden");
             }
         this.replaceState({sliderVisible: !this.state.sliderVisible,scrollPosition:{
             0:scrollPosition[1],
@@ -251,7 +246,6 @@ var Menu = React.createClass({
         var reduceFactor=200;
         var padding=31;
         var opacity = this.state.scrollTop/reduceFactor <= 1.0 ? this.state.scrollTop/reduceFactor > 0.0 ? this.state.scrollTop/reduceFactor : 0.0 : 1.0;
-
         if(window.innerWidth>=768){
             var b=$("body");
             var cf=$(".container-fluid");
@@ -263,28 +257,6 @@ var Menu = React.createClass({
             cf.css("height","100%");
             b.css("overflow","visible");
         }
-
-        //var slider=$("#slider");
-        //if(this.state.sliderVisible){
-        //    slider.css("height",(this.state.height - 75) + "px");
-        //    slider.html("<ul class='slider'>" +
-        //    this.getBlogTitles() +
-        //    "</ul>");
-        //}
-
-        //var search=$("#search");
-        //if(this.state.searchVisible){
-        //    search.css("height",(this.state.height - 75) + "px");
-        //    search.html("<ul class='search'>" +
-        //    "<li key=\"1\"> search now</li>" +
-        //    "<li key=\"1\"> <input ref=\"entry\" " +
-        //    " onChange={this._onTextEntryUpdated}" +
-        //    " value=\""+this.state.value+"\" " +
-        //    " type=\"text\" onKeyDown={this._onKeyDown} ></li>" +
-        //    "</ul>");
-        //}
-
-
         $(".mainRow").css("paddingTop",padding+'px');
         var divStyle= {
             display: 'block',
