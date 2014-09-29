@@ -156,21 +156,23 @@ var Menu = React.createClass({
         cf.css("display","block");
         cf.css("height","100%");
         cf.css("left",0);
+        //cf.css("top",0);
+
         b.css("overflow","visible");
 
         if(undefined !== this.state.scrollPosition && this.isMobile()){
             window.scrollTo(this.state.scrollPosition[1], this.state.scrollPosition[0]);
-            this.setState({
-                overflow:true,
-                scrollPosition:{
-                    0:this.state.scrollPosition[0],
-                    1:this.state.scrollPosition[1]
-                },
-                sliderVisible: false,
-                searchVisible: true,
-                width: 0,
-                height:0
-            });
+            //this.setState({
+            //    overflow:true,
+            //    scrollPosition:{
+            //        0:this.state.scrollPosition[0],
+            //        1:this.state.scrollPosition[1]
+            //    },
+            //    sliderVisible: false,
+            //    searchVisible: true,
+            //    width: 0,
+            //    height:0
+            //});
         }
     },
     toggleSearchClick: function(){
@@ -188,11 +190,11 @@ var Menu = React.createClass({
                 //b.css("width",window.innerWidth+"px");
                 b.css("overflowX","hidden");
                 if(this.isMobile()){
+                    window.scrollTo(0, 0);
                     cf.css("position","absolute");
                     cf.css("visibility","hidden");
                     cf.css("overflowY","hidden");
                     cf.css("height",568+"px");
-                    window.scrollTo(0, 0);
                 } else
                     cf.css("right",width+"px");
                 cf.css("overflow","hidden");
@@ -223,15 +225,29 @@ var Menu = React.createClass({
             var width = this.state.width < 768 ? this.state.width : this.state.width/2;
             b.css("overflowX","hidden");
             cf.css("position","fixed");
+            //if(undefined !== scrollPosition[1] && scrollPosition[1] > 0)
+            //    cf.css("top",-scrollPosition[1]+"px");
+
             if(this.isMobile()){
                 window.scrollTo(0, 0);
                 //cf.css("display","none");
-            } else {
-                    cf.animate({
-                        width: width+"px"
+                $(".sliderItem").css("opacity",0);
+                $(".sideBar").animate({
+                    width: width+"px"
+                }, 500, function(){
+                    // success
+                    $(".sliderItem").animate({
+                        opacity: 1
                     }, 500, function(){
                         // success
                     });
+                });
+            } else {
+                    //cf.animate({
+                    //    width: width+"px"
+                    //}, 500, function(){
+                    //    // success
+                    //});
             }
             }
         this.replaceState({sliderVisible: !this.state.sliderVisible,scrollPosition:{
@@ -266,7 +282,9 @@ var Menu = React.createClass({
             backgroundColor: '#f1f1f1',
             zIndex:'9999999',
             borderRadius: '5px',
-            borderBottom: '1px solid #a5a5a5'
+            borderBottom: '1px solid #a5a5a5',
+            boxShadow:'3px 0px 3px 1px #cccccc'
+
         };
 
         var liStyle = {
@@ -319,6 +337,8 @@ var Menu = React.createClass({
         var inFront={
             zIndex:999999
         };
+
+        var top=0;
         return (<section>
             <div style={divStyle} id="menu">
                 <ul style={ulStyle}>
@@ -335,7 +355,7 @@ var Menu = React.createClass({
             </div>
             <Search height={height} width={width}
                 visible={searchVisible}  />
-            <Sidebar height={height} width={width}
+            <Sidebar height={height} width={width} top={top}
                 visible={sliderVisible} blogTitles={this.props.blogTitles} />
         </section>
         );

@@ -19345,9 +19345,9 @@ var React = require('react'),
 
         render: function() {
 
-            var searchStyle;
+            var style;
             if(!this.props.visible){
-                searchStyle={
+                style={
                     display:'none',
                     visibility:'hidden',
                     height:0,
@@ -19356,30 +19356,36 @@ var React = require('react'),
                     position:"auto"
                 }
             } else {
-                searchStyle={
+                style={
                     display:'block',
                     visibility:'visible',
                     marginTop:'40px',
-                    backgroundColor:'#e0e0e0',
-                    //overflow:'scroll',
                     position:'absolute',
-                    right:0,
-                    width:this.props.width <= 768 ? this.props.width : this.props.width/2+"px",
-                    //height:(this.props.height-75)+"px",
+                    left:0,
+                    width:this.props.width <= 768 ? this.props.width-3 : (this.props.width-3)/2+"px",
                     height:'100%',
-                    zIndex:'998'
-
+                    minHeight:window.innerHeight+"px",
+                    backgroundColor:'#e0e0e0',
+                    zIndex:'998',
+                    borderRight:'1px solid #aaaaaa',
+                    borderLeft:'1px solid #aaaaaa',
+                    overflowScroll:'touch'
                 }
             }
-
+            var bg={
+                backgroundColor:'#e0e0e0',
+                borderRight:'1px solid #aaaaaa',
+                borderLeft:'1px solid #aaaaaa',
+                boxShadow:'3px 0px 0px 0px #cccccc'
+            };
             if(window.innerWidth>=768){
                 return (
                     React.DOM.div(null)
                 )
             } else {
                 return (
-                    React.DOM.div({style: searchStyle}, 
-                        React.DOM.ul({className: "search"}, 
+                    React.DOM.div({style: style}, 
+                        React.DOM.ul({className: "search responsiveList", style: bg}, 
                             React.DOM.li({className: "searchItem"}, "Search is under construction...:)")
                         )
                     )
@@ -19701,21 +19707,23 @@ var Menu = React.createClass({displayName: 'Menu',
         cf.css("display","block");
         cf.css("height","100%");
         cf.css("left",0);
+        //cf.css("top",0);
+
         b.css("overflow","visible");
 
         if(undefined !== this.state.scrollPosition && this.isMobile()){
             window.scrollTo(this.state.scrollPosition[1], this.state.scrollPosition[0]);
-            this.setState({
-                overflow:true,
-                scrollPosition:{
-                    0:this.state.scrollPosition[0],
-                    1:this.state.scrollPosition[1]
-                },
-                sliderVisible: false,
-                searchVisible: true,
-                width: 0,
-                height:0
-            });
+            //this.setState({
+            //    overflow:true,
+            //    scrollPosition:{
+            //        0:this.state.scrollPosition[0],
+            //        1:this.state.scrollPosition[1]
+            //    },
+            //    sliderVisible: false,
+            //    searchVisible: true,
+            //    width: 0,
+            //    height:0
+            //});
         }
     },
     toggleSearchClick: function(){
@@ -19733,11 +19741,11 @@ var Menu = React.createClass({displayName: 'Menu',
                 //b.css("width",window.innerWidth+"px");
                 b.css("overflowX","hidden");
                 if(this.isMobile()){
+                    window.scrollTo(0, 0);
                     cf.css("position","absolute");
                     cf.css("visibility","hidden");
                     cf.css("overflowY","hidden");
                     cf.css("height",568+"px");
-                    window.scrollTo(0, 0);
                 } else
                     cf.css("right",width+"px");
                 cf.css("overflow","hidden");
@@ -19768,15 +19776,29 @@ var Menu = React.createClass({displayName: 'Menu',
             var width = this.state.width < 768 ? this.state.width : this.state.width/2;
             b.css("overflowX","hidden");
             cf.css("position","fixed");
+            //if(undefined !== scrollPosition[1] && scrollPosition[1] > 0)
+            //    cf.css("top",-scrollPosition[1]+"px");
+
             if(this.isMobile()){
                 window.scrollTo(0, 0);
                 //cf.css("display","none");
-            } else {
-                    cf.animate({
-                        width: width+"px"
+                $(".sliderItem").css("opacity",0);
+                $(".sideBar").animate({
+                    width: width+"px"
+                }, 500, function(){
+                    // success
+                    $(".sliderItem").animate({
+                        opacity: 1
                     }, 500, function(){
                         // success
                     });
+                });
+            } else {
+                    //cf.animate({
+                    //    width: width+"px"
+                    //}, 500, function(){
+                    //    // success
+                    //});
             }
             }
         this.replaceState({sliderVisible: !this.state.sliderVisible,scrollPosition:{
@@ -19811,7 +19833,9 @@ var Menu = React.createClass({displayName: 'Menu',
             backgroundColor: '#f1f1f1',
             zIndex:'9999999',
             borderRadius: '5px',
-            borderBottom: '1px solid #a5a5a5'
+            borderBottom: '1px solid #a5a5a5',
+            boxShadow:'3px 0px 3px 1px #cccccc'
+
         };
 
         var liStyle = {
@@ -19864,6 +19888,8 @@ var Menu = React.createClass({displayName: 'Menu',
         var inFront={
             zIndex:999999
         };
+
+        var top=0;
         return (React.DOM.section(null, 
             React.DOM.div({style: divStyle, id: "menu"}, 
                 React.DOM.ul({style: ulStyle}, 
@@ -19880,7 +19906,7 @@ var Menu = React.createClass({displayName: 'Menu',
             ), 
             Search({height: height, width: width, 
                 visible: searchVisible}), 
-            Sidebar({height: height, width: width, 
+            Sidebar({height: height, width: width, top: top, 
                 visible: sliderVisible, blogTitles: this.props.blogTitles})
         )
         );
@@ -20021,8 +20047,7 @@ var React = require('react'),
                     marginTop:'40px',
                     position:'absolute',
                     left:0,
-                    //width:this.props.width <= 768 ? this.props.width : this.props.width/2+"px",
-                    width:'270px',
+                    width:this.props.width <= 768 ? this.props.width-3 : (this.props.width-3)/2+"px",
                     height:'100%',
                     backgroundColor:'#e0e0e0',
                     zIndex:'998',
@@ -20032,6 +20057,7 @@ var React = require('react'),
             var bg={
                 backgroundColor:'#e0e0e0',
                 borderRight:'1px solid #aaaaaa',
+                borderLeft:'1px solid #aaaaaa',
                 boxShadow:'3px 0px 0px 0px #cccccc'
             };
             if(window.innerWidth>=768){
@@ -20042,9 +20068,10 @@ var React = require('react'),
                     width:0
                 }
             }
+
             return (
-                React.DOM.div({style: style, className: "responsiveList"}, 
-                    React.DOM.ul({className: "slider", style: bg, dangerouslySetInnerHTML: {__html: this.props.blogTitles}})
+                React.DOM.div({style: style, className: "responsiveList sideBar"}, 
+                    React.DOM.ul({className: "slider sliderItem", style: bg, dangerouslySetInnerHTML: {__html: this.props.blogTitles}})
                 )
             )
         }

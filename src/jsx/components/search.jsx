@@ -35,9 +35,9 @@ var React = require('react'),
 
         render: function() {
 
-            var searchStyle;
+            var style;
             if(!this.props.visible){
-                searchStyle={
+                style={
                     display:'none',
                     visibility:'hidden',
                     height:0,
@@ -46,30 +46,36 @@ var React = require('react'),
                     position:"auto"
                 }
             } else {
-                searchStyle={
+                style={
                     display:'block',
                     visibility:'visible',
                     marginTop:'40px',
-                    backgroundColor:'#e0e0e0',
-                    //overflow:'scroll',
                     position:'absolute',
-                    right:0,
-                    width:this.props.width <= 768 ? this.props.width : this.props.width/2+"px",
-                    //height:(this.props.height-75)+"px",
+                    left:0,
+                    width:this.props.width <= 768 ? this.props.width-3 : (this.props.width-3)/2+"px",
                     height:'100%',
-                    zIndex:'998'
-
+                    minHeight:window.innerHeight+"px",
+                    backgroundColor:'#e0e0e0',
+                    zIndex:'998',
+                    borderRight:'1px solid #aaaaaa',
+                    borderLeft:'1px solid #aaaaaa',
+                    overflowScroll:'touch'
                 }
             }
-
+            var bg={
+                backgroundColor:'#e0e0e0',
+                borderRight:'1px solid #aaaaaa',
+                borderLeft:'1px solid #aaaaaa',
+                boxShadow:'3px 0px 0px 0px #cccccc'
+            };
             if(window.innerWidth>=768){
                 return (
                     <div />
                 )
             } else {
                 return (
-                    <div style={searchStyle}>
-                        <ul className="search">
+                    <div style={style}>
+                        <ul className="search responsiveList" style={bg}>
                             <li className="searchItem">Search is under construction...:)</li>
                         </ul>
                     </div>
