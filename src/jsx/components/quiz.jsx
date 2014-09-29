@@ -71,9 +71,9 @@ var React = require('react'),
 
                     cssId.css("disabled","disabled");
                     spmCls.css("disabled","disabled");
-                    cssId.addClass("animate bounceOut").delay(750).queue(function(){
+                    cssId.addClass("animate bounceOut").delay(550).queue(function(){
                         cssId.css("opacity",0);
-                            spmCls.addClass("animate bounceOut").delay(750).queue(function() {
+                            spmCls.addClass("animate bounceOut").delay(550).queue(function() {
                                 spmCls.css("opacity",0);
                             });
                     });
