@@ -11,8 +11,13 @@ var React = require('react'),
                 style={
                     display:'none',
                     visibility:'hidden',
-                    height:0,
-                    width:0
+                    height:"100%",
+                    width:"0px",
+                    marginTop:'40px',
+                    zIndex:'0',
+                    position:'absolute',
+                    left:0
+
                 }
             } else {
                 style={

@@ -157,7 +157,10 @@ var Menu = React.createClass({
         cf.css("height","100%");
         cf.css("left",0);
         //cf.css("top",0);
-
+        cf.animate({
+            opacity: 1
+        }, 100, function() {
+        });
         b.css("overflow","visible");
 
         if(undefined !== this.state.scrollPosition && this.isMobile()){
@@ -190,7 +193,7 @@ var Menu = React.createClass({
                 //b.css("width",window.innerWidth+"px");
                 b.css("overflowX","hidden");
                 if(this.isMobile()){
-                    window.scrollTo(0, 0);
+                    //window.scrollTo(0, 0);
                     cf.css("position","absolute");
                     cf.css("visibility","hidden");
                     cf.css("overflowY","hidden");
@@ -229,13 +232,19 @@ var Menu = React.createClass({
             //    cf.css("top",-scrollPosition[1]+"px");
 
             if(this.isMobile()){
-                window.scrollTo(0, 0);
-                //cf.css("display","none");
                 $(".sliderItem").css("opacity",0);
+                cf.animate({
+                    opacity: 0
+                }, 150, function() {
+                    //window.scrollTo(0, 0);
+                });
+
                 $(".sideBar").animate({
                     width: width+"px"
                 }, 500, function(){
                     // success
+                    window.scrollTo(0, 0);
+
                     $(".sliderItem").animate({
                         opacity: 1
                     }, 500, function(){
@@ -243,11 +252,21 @@ var Menu = React.createClass({
                     });
                 });
             } else {
-                    //cf.animate({
-                    //    width: width+"px"
-                    //}, 500, function(){
-                    //    // success
-                    //});
+                //cf.animate({
+                //    opacity: 0.2
+                //}, 100, function() {
+                //});
+                //$(".sliderItem").css("opacity",0);
+                //$(".sideBar").animate({
+                //    width: width+"px"
+                //}, 500, function(){
+                //    // success
+                //    $(".sliderItem").animate({
+                //        opacity: 1
+                //    }, 500, function(){
+                //        // success
+                //    });
+                //});
             }
             }
         this.replaceState({sliderVisible: !this.state.sliderVisible,scrollPosition:{
