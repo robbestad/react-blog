@@ -158,7 +158,7 @@ var Menu = React.createClass({
         cf.css("left",0);
         b.css("overflow","visible");
 
-        if(undefined !== this.state.scrollPosition){
+        if(undefined !== this.state.scrollPosition && this.isMobile()){
             window.scrollTo(this.state.scrollPosition[1], this.state.scrollPosition[0]);
             this.setState({
                 overflow:true,
@@ -225,7 +225,7 @@ var Menu = React.createClass({
             cf.css("position","fixed");
             if(this.isMobile()){
                 window.scrollTo(0, 0);
-                cf.css("display","none");
+                //cf.css("display","none");
             } else {
                     cf.animate({
                         width: width+"px"
@@ -318,7 +318,7 @@ var Menu = React.createClass({
         }
         var inFront={
             zIndex:999999
-        }
+        };
         return (<section>
             <div style={divStyle} id="menu">
                 <ul style={ulStyle}>

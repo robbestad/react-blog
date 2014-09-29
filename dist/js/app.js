@@ -19703,7 +19703,7 @@ var Menu = React.createClass({displayName: 'Menu',
         cf.css("left",0);
         b.css("overflow","visible");
 
-        if(undefined !== this.state.scrollPosition){
+        if(undefined !== this.state.scrollPosition && this.isMobile()){
             window.scrollTo(this.state.scrollPosition[1], this.state.scrollPosition[0]);
             this.setState({
                 overflow:true,
@@ -19770,7 +19770,7 @@ var Menu = React.createClass({displayName: 'Menu',
             cf.css("position","fixed");
             if(this.isMobile()){
                 window.scrollTo(0, 0);
-                cf.css("display","none");
+                //cf.css("display","none");
             } else {
                     cf.animate({
                         width: width+"px"
@@ -19863,7 +19863,7 @@ var Menu = React.createClass({displayName: 'Menu',
         }
         var inFront={
             zIndex:999999
-        }
+        };
         return (React.DOM.section(null, 
             React.DOM.div({style: divStyle, id: "menu"}, 
                 React.DOM.ul({style: ulStyle}, 
