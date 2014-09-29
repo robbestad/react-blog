@@ -19710,7 +19710,7 @@ var Menu = React.createClass({displayName: 'Menu',
         //cf.css("top",0);
         cf.animate({
             opacity: 1
-        }, 100, function() {
+        }, 20, function() {
         });
         b.css("overflow","visible");
 

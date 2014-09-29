@@ -159,7 +159,7 @@ var Menu = React.createClass({
         //cf.css("top",0);
         cf.animate({
             opacity: 1
-        }, 100, function() {
+        }, 20, function() {
         });
         b.css("overflow","visible");
 
