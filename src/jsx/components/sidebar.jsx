@@ -28,7 +28,6 @@ var React = require('react'),
                     left:0,
                     width:this.props.width <= 768 ? this.props.width-3 : (this.props.width-3)/2+"px",
                     height:'100%',
-                    backgroundColor:'#e0e0e0',
                     zIndex:'998',
                     overflowScroll:'touch'
                 }

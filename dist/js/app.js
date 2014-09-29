@@ -19777,47 +19777,58 @@ var Menu = React.createClass({displayName: 'Menu',
         } else {
 
             var width = this.state.width < 768 ? this.state.width : this.state.width/2;
-            b.css("overflowX","hidden");
-            cf.css("position","fixed");
-            //if(undefined !== scrollPosition[1] && scrollPosition[1] > 0)
-            //    cf.css("top",-scrollPosition[1]+"px");
 
             if(this.isMobile()){
                 $(".sliderItem").css("opacity",0);
                 cf.animate({
-                    opacity: 0
-                }, 150, function() {
-                    //window.scrollTo(0, 0);
-                });
-
-                $(".sideBar").animate({
-                    width: width+"px"
-                }, 500, function(){
-                    // success
+                    background:"#ffffff",
+                    opacity:0
+                }, 100, function() {
+                    b.css("overflowX","hidden");
+                    cf.css("position","fixed");
                     window.scrollTo(0, 0);
-
-                    $(".sliderItem").animate({
-                        opacity: 1
-                    }, 500, function(){
+                    $(".sideBar").animate({
+                        width: width+"px"
+                    }, 0, function(){
                         // success
+                        window.scrollTo(0, 0);
+                        $(".sliderItem").animate({
+                            opacity: 1,
+                            backgroundColor:"#e0e0e0"
+                        }, 100, function(){
+                            // success
+                        });
                     });
+
                 });
+
+
             } else {
-                //cf.animate({
-                //    opacity: 0.2
-                //}, 100, function() {
-                //});
-                //$(".sliderItem").css("opacity",0);
-                //$(".sideBar").animate({
-                //    width: width+"px"
-                //}, 500, function(){
-                //    // success
-                //    $(".sliderItem").animate({
-                //        opacity: 1
-                //    }, 500, function(){
-                //        // success
-                //    });
-                //});
+                //b.css("overflowX","hidden");
+                //cf.css("position","fixed");
+                $(".sliderItem").css("opacity",0);
+                cf.animate({
+                    background:"#ffffff",
+                    opacity:0
+                }, 100, function() {
+                    b.css("overflowX","hidden");
+                    cf.css("position","fixed");
+                    //window.scrollTo(0, 0);
+                    $(".sideBar").animate({
+                        width: width+"px"
+                    }, 0, function(){
+                        // success
+                        window.scrollTo(0, 0);
+                        $(".sliderItem").animate({
+                            opacity: 1,
+                            backgroundColor:"#e0e0e0"
+                        }, 100, function(){
+                            // success
+                        });
+                    });
+
+                });
+
             }
             }
         this.replaceState({sliderVisible: !this.state.sliderVisible,scrollPosition:{
@@ -20073,7 +20084,6 @@ var React = require('react'),
                     left:0,
                     width:this.props.width <= 768 ? this.props.width-3 : (this.props.width-3)/2+"px",
                     height:'100%',
-                    backgroundColor:'#e0e0e0',
                     zIndex:'998',
                     overflowScroll:'touch'
                 }
