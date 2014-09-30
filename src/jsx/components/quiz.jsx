@@ -65,6 +65,18 @@ var React = require('react'),
 
         getQuizFromApi: function(id) {
         var react = this;
+            if(undefined === typeof id){
+            var state=react.state;
+            var finishTime = this.state.timeLimit-this.state.countdown;
+            state.timeBonus = (this.state.timeLimit / (this.state.timeLimit-finishTime));
+            var ratio;
+            if(this.state.wrong_answers === 0) ratio=1;
+            else ratio = this.state.correct_answers/this.state.wrong_answers;
+            state.points += Math.ceil((0.1 + ratio) * 10/state.timeBonus);
+            state.quizFinished=true;
+            react.replaceState(state);
+            return void 0;
+            }
         var spm = $(".spm");
         var question = $(".questionTitle");
         $.getJSON( "http://api.robbestad.com/programmingquiz/"+id, function( data ) {
@@ -193,25 +205,9 @@ var React = require('react'),
                 spm.removeClass("animated bounceOut");
             }, 1250);
 
-            if(undefined === nextQuestion){
-                var state=react.state;
-                var finishTime = this.state.timeLimit-this.state.countdown;
-                state.timeBonus = (this.state.timeLimit / (this.state.timeLimit-finishTime));
-                var ratio;
-                if(this.state.wrong_answers === 0) ratio=1;
-                else ratio = this.state.correct_answers/this.state.wrong_answers;
-                state.points += Math.ceil((0.1 + ratio) * 10/state.timeBonus);
-                state.quizFinished=true;
-                react.replaceState(state);
-                // quiz finished
-            } else {
-                setTimeout(function () {
-                    react.getQuizFromApi(nextQuestion);
-
-                }, 1250);
-            }
-
-
+            setTimeout(function () {
+                react.getQuizFromApi(nextQuestion);
+            }, 1250);
         },
 
         shuffle: function(o){
