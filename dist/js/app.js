@@ -20162,13 +20162,13 @@ var React = require('react'),
                 react.replaceState(state);
                 // quiz finished
             } else {
-                react.getQuizFromApi(nextQuestion);
                 setTimeout(function () {
-                   state.answer1="";
-                   state.answer2="";
-                   state.answer3="";
-                   state.answer4="";
-                   state.answer5="";
+                    react.getQuizFromApi(nextQuestion);
+                    state.answer1="";
+                    state.answer2="";
+                    state.answer3="";
+                    state.answer4="";
+                    state.answer5="";
                     question.css("opacity",0);
                     question.removeClass("animated bounceOut");
                     cssId.removeClass("animated bounceOut");
