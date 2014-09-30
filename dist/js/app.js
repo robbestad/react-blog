@@ -20149,12 +20149,12 @@ var React = require('react'),
                 cssId.css("opacity",0);
                 cssId.removeClass("animated bounceOut");
                 question.addClass("animated bounceOut");
-            }, 500);
+            }, 750);
 
             setTimeout(function () {
                 spm.css("opacity",0);
                 spm.removeClass("animated bounceOut");
-            }, 750);
+            }, 1000);
 
             setTimeout(function () {
                 question.css("opacity",0);
@@ -20170,11 +20170,8 @@ var React = require('react'),
                 question.removeClass("animated bounceOut");
                 cssId.removeClass("animated bounceOut");
                 spm.removeClass("animated bounceOut");
-            }, 1250);
-
-            setTimeout(function () {
                 react.getQuizFromApi(nextQuestion);
-            }, 1250);
+            }, 1500);
         },
 
         shuffle: function(o){
