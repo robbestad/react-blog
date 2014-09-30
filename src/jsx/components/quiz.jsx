@@ -65,6 +65,8 @@ var React = require('react'),
 
         getQuizFromApi: function(id) {
         var react = this;
+        var spinner = $(".spinner");
+
             if(undefined === typeof id){
             var state=react.state;
             var finishTime = this.state.timeLimit-this.state.countdown;
@@ -77,9 +79,10 @@ var React = require('react'),
             react.replaceState(state);
             return void 0;
             }
-        var spm = $(".spm");
-        var question = $(".questionTitle");
-        $.getJSON( "http://api.robbestad.com/programmingquiz/"+id, function( data ) {
+            var spm = $(".spm");
+            var question = $(".questionTitle");
+
+            $.getJSON( "http://api.robbestad.com/programmingquiz/"+id, function( data ) {
             var state = react.state;
             state.question=data.question;
             state.code=data.code;
@@ -92,24 +95,15 @@ var React = require('react'),
             state.correct=data.correct_answers;
             react.replaceState(state);
 
-
             spm.css("opacity",1);
             question.css("opacity",1);
-                //question.addClass("animated bounceIn");
-                spm.addClass("animated bounceIn");
-
-
-            //setTimeout(function () {
-                    question.removeClass("animated bounceIn");
-                    spm.removeClass("animated bounceIn");
-                    spm.css("disabled","");
-                    spm.css("opacity",1);
-                    //question.css("opacity",1);
-                //}, 500);
-                //setTimeout(function () {
-                    Rainbow.color($(".questionTitle"));
-                //}, 1000);
-            });
+            spm.addClass("animated bounceIn");
+            question.removeClass("animated bounceIn");
+            spm.removeClass("animated bounceIn");
+            spm.css("disabled","");
+            spm.css("opacity",1);
+            spinner.css("visibility","hidden");
+        });
         },
         checkIfFinished: function(){
 
@@ -134,6 +128,9 @@ var React = require('react'),
             var cssId=$("#"+e.target.id);
             var spm=$(".spm");
             var question=$(".questionTitle");
+            var spinner=$(".spinner");
+            spinner.css("left",Math.floor($("body").width()/2)+Math.floor($("#quiz").width()/4)-25+"px");
+
             if((cssId.css("disabled") === "disabled"
              || spm.css("disabled") === "disabled")){
                 return void 0;
@@ -178,18 +175,22 @@ var React = require('react'),
             setTimeout(function () {
                 spm.addClass("animated bounceOut");
                 question.addClass("animated bounceOut");
+                spinner.css("visibility","visible");
             }, 250);
             setTimeout(function () {
                 cssId.css("opacity",0);
                 cssId.removeClass("animated bounceOut");
-            }, 500);
+            }, 750);
 
             setTimeout(function () {
                 spm.css("opacity",0);
                 spm.removeClass("animated bounceOut");
                 question.css("opacity",0);
                 question.removeClass("animated bounceOut");
-            }, 750);
+
+
+
+            }, 1000);
 
             setTimeout(function () {
                 var state=react.state;
@@ -204,7 +205,7 @@ var React = require('react'),
                 cssId.removeClass("animated bounceOut");
                 spm.removeClass("animated bounceOut");
                 react.getQuizFromApi(nextQuestion);
-            }, 1250);
+            }, 1500);
         },
 
         shuffle: function(o){
@@ -322,6 +323,10 @@ var React = require('react'),
             return (
                 <div style={paddingTop}>
                 <section>
+                    <div className="spinner">
+                        <div className="dot1"></div>
+                        <div className="dot2"></div>
+                    </div>
                     <span className="quizinfo">
                     Each correct answers scores one point. Winning streaks are rewarded.
                     Additionally, completing the quiz faster earns you a time bonus.

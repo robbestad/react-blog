@@ -130,8 +130,8 @@ var Menu = React.createClass({
         if(undefined !== this.props.blogData){
             results = this.props.blogData;
             var items='';
-            var l = this.props.blogData.length > 10 ? 10 : this.props.blogData.length;
-            for(var i=0; i < 10; i++)
+
+            for(var i=0; i < this.props.blogData.length; i++)
               items+= "<li key='" + i + "'><a href=\"/index.php?id="+this.props.blogData[i].id+"#nosplash\">" +
                           this.props.blogData[i].title +
                           "</a></li>" ;
