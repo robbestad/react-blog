@@ -20069,7 +20069,7 @@ var React = require('react'),
         },
         checkIfFinished: function(){
 
-            if(undefined === nextQuestion || this.state.countdown <= 0){
+            if(this.state.countdown <= 0){
                 // quiz finished
                 // time bonus
                 var react = this;
@@ -20099,7 +20099,22 @@ var React = require('react'),
 
             var state=react.state;
             var nextQuestion = state.questions.pop();
-
+            if(undefined === nextQuestion || this.state.countdown <= 0){
+                // quiz finished
+                // time bonus
+                var react = this;
+                var cssId=$("#"+e.target.id);
+                var spm=$(".spm");
+                var question=$(".questionTitle");
+                var finishTime = this.state.timeLimit-this.state.countdown;
+                state.timeBonus = (this.state.timeLimit / (this.state.timeLimit-finishTime));
+                var ratio;
+                if(this.state.wrong_answers === 0) ratio=1;
+                else ratio = this.state.correct_answers/this.state.wrong_answers;
+                state.points += Math.ceil((0.1 + ratio) * 10/state.timeBonus);
+                state.quizFinished=true;
+                react.replaceState(state);
+            }
 
             if(e.target.name === this.state.correct){
                 state.winStreak+=1;
@@ -20114,8 +20129,7 @@ var React = require('react'),
                 react.replaceState(state);
             }
 
-            this.checkIfFinished();
-
+            
 
 
             cssId.css("disabled","disabled");
