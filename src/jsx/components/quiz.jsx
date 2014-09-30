@@ -173,15 +173,15 @@ var React = require('react'),
 
             setTimeout(function () {
                 spm.css("opacity",0);
+                cssId.removeClass("animated bounceOut");
+                spm.removeClass("animated bounceOut");
                 question.addClass("animated bounceOut");
-            }, 350);
+            }, 750);
 
             setTimeout(function () {
                 question.css("opacity",0);
                 question.removeClass("animated bounceOut");
-                cssId.removeClass("animated bounceOut");
-                spm.removeClass("animated bounceOut");
-            }, 600);
+            }, 1250);
 
             if(undefined === nextQuestion){
                 var state=react.state;
@@ -195,15 +195,21 @@ var React = require('react'),
                 react.replaceState(state);
                 // quiz finished
             } else {
-            setTimeout(function () {
-               state.answer1="... Loading ...";
-               state.answer2="... Loading ...";
-               state.answer3="... Loading ...";
-               state.answer4="... Loading ...";
-               state.answer5="... Loading ...";
-               react.getQuizFromApi(nextQuestion);
-            }, 950);
+                react.getQuizFromApi(nextQuestion);
+                setTimeout(function () {
+                   state.answer1="";
+                   state.answer2="";
+                   state.answer3="";
+                   state.answer4="";
+                   state.answer5="";
+                    question.css("opacity",0);
+                    question.removeClass("animated bounceOut");
+                    cssId.removeClass("animated bounceOut");
+                    spm.removeClass("animated bounceOut");
+                }, 1250);
             }
+
+
         },
 
         shuffle: function(o){
