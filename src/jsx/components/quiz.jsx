@@ -85,7 +85,7 @@ var React = require('react'),
                 spm.css("opacity",1);
                 question.css("opacity",1);
                 spm.addClass("animated bounceIn");
-                Rainbow.color($(".questionTitle"));
+
 
             setTimeout(function () {
                     question.removeClass("bounceIn");
@@ -96,8 +96,9 @@ var React = require('react'),
                     spm.css("opacity",1);
                     question.css("opacity",1);
                 }, 500);
-
-
+                setTimeout(function () {
+                    Rainbow.color($(".questionTitle"));
+                }, 1000);
             });
         },
         checkIfFinished: function(){
@@ -106,9 +107,6 @@ var React = require('react'),
                 // quiz finished
                 // time bonus
                 var react = this;
-                var cssId=$("#"+e.target.id);
-                var spm=$(".spm");
-                var question=$(".questionTitle");
                 var finishTime = this.state.timeLimit-this.state.countdown;
                 state.timeBonus = (this.state.timeLimit / (this.state.timeLimit-finishTime));
                 var ratio;
@@ -162,7 +160,7 @@ var React = require('react'),
                 react.replaceState(state);
             }
 
-            
+
 
 
             cssId.css("disabled","disabled");
@@ -191,8 +189,13 @@ var React = require('react'),
                 // quiz finished
             } else {
             setTimeout(function () {
+                state.answer1="... Loading ...";
+                state.answer2="... Loading ...";
+                state.answer3="... Loading ...";
+                state.answer4="... Loading ...";
+                state.answer5="... Loading ...";
                react.getQuizFromApi(nextQuestion);
-            }, 1500);
+            }, 500);
             }
         },
 
@@ -328,16 +331,26 @@ var React = require('react'),
                     <div>
                     <ul className="quiz" value="spørsmål 1">
                         <li value="1" style={padding}>
-                            <input onClick={this.quizClick} id="answer1"  name="1" className="quizQuestion spm" style={input} type="button" key="1" value={this.state.answer1} />
+                            <input onClick={this.quizClick} id="answer1"  name="1" className="quizQuestion spm"
+                            style={input} type="button" key="1" value={this.state.answer1} />
                             </li>
+
                         <li value="2" style={padding}>
-                            <input onClick={this.quizClick} id="answer2"  name="2" className="quizQuestion spm" style={input} type="button" key="2" value={this.state.answer2} />
+
+                            <input onClick={this.quizClick} id="answer2"  name="2" className="quizQuestion spm"
+                            style={input} type="button" key="2" value={this.state.answer2} />
                             </li>
+
                         <li value="3" style={padding}>
-                            <input onClick={this.quizClick} id="answer3"  name="3" className="quizQuestion spm" style={input} type="button" key="3" value={this.state.answer3} />
+
+                            <input onClick={this.quizClick} id="answer3"  name="3" className="quizQuestion spm"
+                            style={input} type="button" key="3" value={this.state.answer3} />
                             </li>
+
                         <li value="4" style={padding}>
-                            <input onClick={this.quizClick} id="answer4"  name="4" className="quizQuestion spm" style={input} type="button" key="4" value={this.state.answer4} />
+
+                            <input onClick={this.quizClick} id="answer4"  name="4" className="quizQuestion spm"
+                            style={input} type="button" key="4" value={this.state.answer4} />
                             </li>
                     </ul>
                     </div>
