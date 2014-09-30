@@ -20186,7 +20186,11 @@ var React = require('react'),
             this.getQuizFromApi(nextQuestion);
             this.setInterval(this.tick, 1000); // Call a method on the mixin
             var spinner=$(".spinner");
+            if($("body").width()<=768){
+                spinner.css("left",Math.floor($("body").width()/2)+"px");
+            } else {
             spinner.css("left",Math.floor($("body").width()/2)+Math.floor($("#quiz").width()/4)+"px");
+            }
             spinner.css("zIndex",0);
         },
         tick: function(){
