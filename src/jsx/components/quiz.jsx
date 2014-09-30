@@ -171,26 +171,23 @@ var React = require('react'),
             cssId.css("disabled","disabled");
             spm.css("disabled","disabled");
             cssId.addClass("animated bounceOut");
-            //spm.css("opacity",0.5);
+            spinner.css("visibility","visible");
+
             setTimeout(function () {
                 spm.addClass("animated bounceOut");
                 question.addClass("animated bounceOut");
-                spinner.css("visibility","visible");
             }, 250);
             setTimeout(function () {
                 cssId.css("opacity",0);
                 cssId.removeClass("animated bounceOut");
-            }, 750);
-
+            }, 500);
             setTimeout(function () {
                 spm.css("opacity",0);
                 spm.removeClass("animated bounceOut");
                 question.css("opacity",0);
                 question.removeClass("animated bounceOut");
+            }, 750);
 
-
-
-            }, 1000);
 
             setTimeout(function () {
                 var state=react.state;
@@ -205,7 +202,7 @@ var React = require('react'),
                 cssId.removeClass("animated bounceOut");
                 spm.removeClass("animated bounceOut");
                 react.getQuizFromApi(nextQuestion);
-            }, 1500);
+            }, 1250);
         },
 
         shuffle: function(o){

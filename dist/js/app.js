@@ -20142,11 +20142,11 @@ var React = require('react'),
             setTimeout(function () {
                 spm.addClass("animated bounceOut");
                 question.addClass("animated bounceOut");
+                spinner.css("visibility","visible");
             }, 250);
             setTimeout(function () {
                 cssId.css("opacity",0);
                 cssId.removeClass("animated bounceOut");
-                spinner.css("visibility","visible");
             }, 750);
 
             setTimeout(function () {
