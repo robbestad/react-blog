@@ -270,7 +270,7 @@ var React = require('react'),
                                 </p>
                                 <p>
                                 Your final score (+ time bonus): {this.state.points}<br/>
-                                    <br/> 
+                                    <br/>
                                 <strong>
                                  {this.state.programmingLanguage} ranking: {assessment}
                                 </strong>
