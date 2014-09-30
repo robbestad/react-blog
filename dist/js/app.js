@@ -20144,21 +20144,21 @@ var React = require('react'),
             //spm.css("opacity",0.5);
             setTimeout(function () {
                 spm.addClass("animated bounceOut");
+                question.addClass("animated bounceOut");
             }, 250);
             setTimeout(function () {
                 cssId.css("opacity",0);
                 cssId.removeClass("animated bounceOut");
-                question.addClass("animated bounceOut");
-            }, 750);
+            }, 500);
 
             setTimeout(function () {
                 spm.css("opacity",0);
                 spm.removeClass("animated bounceOut");
-            }, 1000);
-
-            setTimeout(function () {
                 question.css("opacity",0);
                 question.removeClass("animated bounceOut");
+            }, 750);
+
+            setTimeout(function () {
                 var state=react.state;
                 state.answer1="";
                 state.answer2="";
@@ -20171,7 +20171,7 @@ var React = require('react'),
                 cssId.removeClass("animated bounceOut");
                 spm.removeClass("animated bounceOut");
                 react.getQuizFromApi(nextQuestion);
-            }, 1500);
+            }, 1250);
         },
 
         shuffle: function(o){
