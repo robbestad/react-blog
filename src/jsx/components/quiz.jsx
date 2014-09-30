@@ -113,7 +113,7 @@ var React = require('react'),
                     }, 1250);
 
                     setTimeout(function () {
-                       react.getQuizFromApi(1);
+                       react.getQuizFromApi(2);
                     }, 1500);
         },
 

@@ -105,7 +105,7 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
             }
             ?>
         </div>
-        <div class="article col-sm-9 col-md-10 col-xs-12">
+        <div class="article col-sm-9 col-md-9 col-xs-12">
 
             <?php
             if(!empty($_GET["page"]) && $_GET["page"] === "quiz") {
