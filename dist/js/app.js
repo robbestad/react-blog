@@ -20126,28 +20126,38 @@ var React = require('react'),
                 react.replaceState(state);
             }
 
-
-
-
             cssId.css("disabled","disabled");
             spm.css("disabled","disabled");
             cssId.addClass("animated bounceOut");
             //spm.css("opacity",0.5);
             setTimeout(function () {
-                cssId.css("opacity",0);
                 spm.addClass("animated bounceOut");
             }, 250);
+            setTimeout(function () {
+                cssId.css("opacity",0);
+                cssId.removeClass("animated bounceOut");
+                question.addClass("animated bounceOut");
+            }, 500);
 
             setTimeout(function () {
                 spm.css("opacity",0);
-                cssId.removeClass("animated bounceOut");
                 spm.removeClass("animated bounceOut");
-                question.addClass("animated bounceOut");
             }, 750);
 
             setTimeout(function () {
                 question.css("opacity",0);
                 question.removeClass("animated bounceOut");
+                var state=react.state;
+                state.answer1="";
+                state.answer2="";
+                state.answer3="";
+                state.answer4="";
+                state.answer5="";
+                react.setState(state);
+                question.css("opacity",0);
+                question.removeClass("animated bounceOut");
+                cssId.removeClass("animated bounceOut");
+                spm.removeClass("animated bounceOut");
             }, 1250);
 
             if(undefined === nextQuestion){
@@ -20164,15 +20174,7 @@ var React = require('react'),
             } else {
                 setTimeout(function () {
                     react.getQuizFromApi(nextQuestion);
-                    state.answer1="";
-                    state.answer2="";
-                    state.answer3="";
-                    state.answer4="";
-                    state.answer5="";
-                    question.css("opacity",0);
-                    question.removeClass("animated bounceOut");
-                    cssId.removeClass("animated bounceOut");
-                    spm.removeClass("animated bounceOut");
+
                 }, 1250);
             }
 
