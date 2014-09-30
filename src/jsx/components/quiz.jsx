@@ -33,7 +33,7 @@ var React = require('react'),
                 countdown:(15*60),
                 lastWin:false,
                 winStreak:false,
-                questions:[1,2,3,4,5,6,7,8,9,10],
+                questions:[1,2,3,4,5,6,7,8,9,10,11],
                 timeBonus: 0,
                 quizFinished:false,
                 correct_answers:0,
@@ -100,6 +100,25 @@ var React = require('react'),
 
             });
         },
+        checkIfFinished: function(){
+
+            if(undefined === nextQuestion || this.state.countdown <= 0){
+                // quiz finished
+                // time bonus
+                var react = this;
+                var cssId=$("#"+e.target.id);
+                var spm=$(".spm");
+                var question=$(".questionTitle");
+                var finishTime = this.state.timeLimit-this.state.countdown;
+                state.timeBonus = (this.state.timeLimit / (this.state.timeLimit-finishTime));
+                var ratio;
+                if(this.state.wrong_answers === 0) ratio=1;
+                else ratio = this.state.correct_answers/this.state.wrong_answers;
+                state.points += Math.ceil((0.1 + ratio) * 10/state.timeBonus);
+                state.quizFinished=true;
+                react.replaceState(state);
+            }
+        },
 
         quizClick: function(e){
             var react = this;
@@ -128,18 +147,7 @@ var React = require('react'),
                 react.replaceState(state);
             }
 
-
-            if(undefined === nextQuestion || this.state.countdown <= 0){
-                // quiz finished
-                // time bonus
-                var finishTime = this.state.timeLimit-this.state.countdown;
-                state.timeBonus = (this.state.timeLimit / (this.state.timeLimit-finishTime));
-                var ratio;
-                if(this.state.wrong_answers === 0) ratio=1;
-                else ratio = this.state.correct_answers/this.state.wrong_answers;
-                state.points += Math.ceil((0.1 + ratio) * 10/state.timeBonus);
-                state.quizFinished=true;
-            }
+            this.checkIfFinished();
 
 
 
@@ -195,6 +203,7 @@ var React = require('react'),
                 state.countdown=state.countdown-1;
                 this.replaceState(state);
             }
+            this.checkIfFinished();
         },
 
         render: function() {
