@@ -20047,12 +20047,12 @@ var React = require('react'),
             state.correct=data.correct_answers;
             react.replaceState(state);
 
-                Rainbow.color($(".questionTitle"));
+
                 question.addClass("animated bounceIn");
                 spm.css("opacity",1);
                 question.css("opacity",1);
                 spm.addClass("animated bounceIn");
-
+                Rainbow.color($(".questionTitle"));
 
             setTimeout(function () {
                     question.removeClass("bounceIn");
@@ -20060,6 +20060,8 @@ var React = require('react'),
                     spm.removeClass("animated");
                     spm.removeClass("bounceIn");
                     spm.css("disabled","");
+                    spm.css("opacity",1);
+                    question.css("opacity",1);
                 }, 500);
 
 
