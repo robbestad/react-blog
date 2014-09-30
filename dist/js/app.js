@@ -20048,24 +20048,22 @@ var React = require('react'),
             react.replaceState(state);
 
 
-                question.addClass("animated bounceIn");
-                spm.css("opacity",1);
-                question.css("opacity",1);
+            spm.css("opacity",1);
+            question.css("opacity",1);
+                //question.addClass("animated bounceIn");
                 spm.addClass("animated bounceIn");
 
 
-            setTimeout(function () {
-                    question.removeClass("bounceIn");
-                    question.removeClass("animated");
-                    spm.removeClass("animated");
-                    spm.removeClass("bounceIn");
+            //setTimeout(function () {
+                    question.removeClass("animated bounceIn");
+                    spm.removeClass("animated bounceIn");
                     spm.css("disabled","");
                     spm.css("opacity",1);
-                    question.css("opacity",1);
-                }, 500);
-                setTimeout(function () {
+                    //question.css("opacity",1);
+                //}, 500);
+                //setTimeout(function () {
                     Rainbow.color($(".questionTitle"));
-                }, 1000);
+                //}, 1000);
             });
         },
         checkIfFinished: function(){
@@ -20074,6 +20072,7 @@ var React = require('react'),
                 // quiz finished
                 // time bonus
                 var react = this;
+                var state=react.state;
                 var finishTime = this.state.timeLimit-this.state.countdown;
                 state.timeBonus = (this.state.timeLimit / (this.state.timeLimit-finishTime));
                 var ratio;
@@ -20137,20 +20136,19 @@ var React = require('react'),
             setTimeout(function () {
                 cssId.css("opacity",0);
                 spm.addClass("animated bounceOut");
-            }, 500);
+            }, 300);
 
             setTimeout(function () {
                 spm.css("opacity",0);
                 cssId.removeClass("animated bounceOut");
                 spm.removeClass("animated bounceOut");
                 question.addClass("animated bounceOut");
-
-            }, 750);
+            }, 450);
 
             setTimeout(function () {
                 question.css("opacity",0);
                 question.removeClass("animated bounceOut");
-            }, 1250);
+            }, 700);
 
             if(undefined === nextQuestion){
                 // quiz finished
@@ -20162,7 +20160,7 @@ var React = require('react'),
                 state.answer4="... Loading ...";
                 state.answer5="... Loading ...";
                react.getQuizFromApi(nextQuestion);
-            }, 500);
+            }, 750);
             }
         },
 
@@ -20277,6 +20275,7 @@ var React = require('react'),
             }
             else {
 
+
             return (
                 React.DOM.div({style: paddingTop}, 
                 React.DOM.section(null, 
@@ -20290,9 +20289,9 @@ var React = require('react'),
                         React.DOM.span({className: "title"}, "Quiz")
                     ), 
                     React.DOM.div({className: "quizhead"}, 
-                        React.DOM.h3({className: "questionTitle rainbow"}, 
+                        React.DOM.h3({className: "questionTitle"}, 
                             this.state.question, 
-                            React.DOM.pre(null, React.DOM.code({'data-language': this.state.programmingLanguage}, this.state.code))
+                                React.DOM.pre(null, this.state.code)
                         )
                     ), 
                     React.DOM.div(null, 
@@ -20401,10 +20400,6 @@ module.exports = Sidebar;
 
 $(document).ready(function () {
     FastClick.attach(document.body);
-    Rainbow.color();
-    $(document).on({ 'touchstart' : function(){
-        $("#quiz.quizQuestion:hover".css("background","transparent"))
-    } });
 });
 
 var myScroll;

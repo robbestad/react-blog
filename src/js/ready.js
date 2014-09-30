@@ -4,10 +4,6 @@
 
 $(document).ready(function () {
     FastClick.attach(document.body);
-    Rainbow.color();
-    $(document).on({ 'touchstart' : function(){
-        $("#quiz.quizQuestion:hover".css("background","transparent"))
-    } });
 });
 
 var myScroll;
