@@ -19682,7 +19682,7 @@ var Menu = React.createClass({displayName: 'Menu',
             results = this.props.blogData;
             var items='';
             var l = this.props.blogData.length > 10 ? 10 : this.props.blogData.length;
-            for(var i=0; i < l; i++)
+            for(var i=0; i < 10; i++)
               items+= "<li key='" + i + "'><a href=\"/index.php?id="+this.props.blogData[i].id+"#nosplash\">" +
                           this.props.blogData[i].title +
                           "</a></li>" ;
@@ -20140,17 +20140,26 @@ var React = require('react'),
 
             setTimeout(function () {
                 spm.css("opacity",0);
-                cssId.removeClass("animated bounceOut");
-                spm.removeClass("animated bounceOut");
                 question.addClass("animated bounceOut");
             }, 450);
 
             setTimeout(function () {
                 question.css("opacity",0);
                 question.removeClass("animated bounceOut");
+                cssId.removeClass("animated bounceOut");
+                spm.removeClass("animated bounceOut");
             }, 700);
 
             if(undefined === nextQuestion){
+                var state=react.state;
+                var finishTime = this.state.timeLimit-this.state.countdown;
+                state.timeBonus = (this.state.timeLimit / (this.state.timeLimit-finishTime));
+                var ratio;
+                if(this.state.wrong_answers === 0) ratio=1;
+                else ratio = this.state.correct_answers/this.state.wrong_answers;
+                state.points += Math.ceil((0.1 + ratio) * 10/state.timeBonus);
+                state.quizFinished=true;
+                react.replaceState(state);
                 // quiz finished
             } else {
             setTimeout(function () {
