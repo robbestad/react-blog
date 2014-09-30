@@ -20288,9 +20288,26 @@ var React = require('react'),
                 React.DOM.div({style: paddingTop}, 
                 React.DOM.section(null, 
                     React.DOM.div({className: "spinner"}, 
-                        React.DOM.div({className: "dot1"}), 
-                        React.DOM.div({className: "dot2"})
+                        React.DOM.div({className: "spinner-container container1"}, 
+                            React.DOM.div({className: "circle1"}), 
+                            React.DOM.div({className: "circle2"}), 
+                            React.DOM.div({className: "circle3"}), 
+                            React.DOM.div({className: "circle4"})
+                        ), 
+                        React.DOM.div({className: "spinner-container container2"}, 
+                            React.DOM.div({className: "circle1"}), 
+                            React.DOM.div({className: "circle2"}), 
+                            React.DOM.div({className: "circle3"}), 
+                            React.DOM.div({className: "circle4"})
+                        ), 
+                        React.DOM.div({className: "spinner-container container3"}, 
+                            React.DOM.div({className: "circle1"}), 
+                            React.DOM.div({className: "circle2"}), 
+                            React.DOM.div({className: "circle3"}), 
+                            React.DOM.div({className: "circle4"})
+                        )
                     ), 
+
                     React.DOM.span({className: "quizinfo"}, 
                     "Each correct answers scores one point. Winning streaks are rewarded." + ' ' +
                     "Additionally, completing the quiz faster earns you a time bonus."
