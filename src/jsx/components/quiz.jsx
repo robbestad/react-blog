@@ -220,9 +220,9 @@ var React = require('react'),
             this.setInterval(this.tick, 1000); // Call a method on the mixin
             var spinner=$(".spinner");
             if($("body").width()<=768){
-                spinner.css("left",Math.floor($("body").width()/2)+"px");
+                spinner.css("left",Math.floor($("body").width()/2)-10+"px");
             } else {
-            spinner.css("left",Math.floor($("body").width()/2)+Math.floor($("#quiz").width()/4)+"px");
+            spinner.css("left",Math.floor($("body").width()/2)+Math.floor($("#quiz").width()/4)-10+"px");
             }
             spinner.css("zIndex",0);
         },
