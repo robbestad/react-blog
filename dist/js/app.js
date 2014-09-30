@@ -20069,8 +20069,8 @@ var React = require('react'),
             spm.removeClass("animated bounceIn");
             spm.css("disabled","");
             spm.css("opacity",1);
-            spinner.css("visibility","hidden");
-        });
+            spinner.css("zIndex",-1)
+            });
         },
         checkIfFinished: function(){
 
@@ -20096,7 +20096,6 @@ var React = require('react'),
             var spm=$(".spm");
             var question=$(".questionTitle");
             var spinner=$(".spinner");
-            spinner.css("left",Math.floor($("body").width()/2)+Math.floor($("#quiz").width()/4)-25+"px");
 
             if((cssId.css("disabled") === "disabled"
              || spm.css("disabled") === "disabled")){
@@ -20138,15 +20137,16 @@ var React = require('react'),
             cssId.css("disabled","disabled");
             spm.css("disabled","disabled");
             cssId.addClass("animated bounceOut");
-            spinner.css("visibility","visible");
-
+            //spinner.css("visibility","visible");
             setTimeout(function () {
                 spm.addClass("animated bounceOut");
                 question.addClass("animated bounceOut");
+
             }, 250);
             setTimeout(function () {
                 cssId.css("opacity",0);
                 cssId.removeClass("animated bounceOut");
+                spinner.css("zIndex",10);
             }, 500);
             setTimeout(function () {
                 spm.css("opacity",0);
@@ -20185,7 +20185,9 @@ var React = require('react'),
 
             this.getQuizFromApi(nextQuestion);
             this.setInterval(this.tick, 1000); // Call a method on the mixin
-
+            var spinner=$(".spinner");
+            spinner.css("left",Math.floor($("body").width()/2)+Math.floor($("#quiz").width()/4)+"px");
+            spinner.css("zIndex",0);
         },
         tick: function(){
             if(!this.state.quizFinished){
