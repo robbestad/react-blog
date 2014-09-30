@@ -20023,14 +20023,11 @@ var React = require('react'),
                 answer5:data.answer5
             });
                 Rainbow.color($(".questionTitle"));
-            question.addClass("animated bounceIn");
+                question.addClass("animated bounceIn");
                 spm.css("opacity",1);
                 question.css("opacity",1);
                 spm.addClass("animated bounceIn");
 
-                //spm.animate(function(){
-                //
-                //})
 
             setTimeout(function () {
                     question.removeClass("bounceIn");
@@ -20079,7 +20076,7 @@ var React = require('react'),
                     }, 1250);
 
                     setTimeout(function () {
-                       react.getQuizFromApi(1);
+                       react.getQuizFromApi(2);
                     }, 1500);
         },
 

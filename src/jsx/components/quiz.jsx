@@ -57,14 +57,11 @@ var React = require('react'),
                 answer5:data.answer5
             });
                 Rainbow.color($(".questionTitle"));
-            question.addClass("animated bounceIn");
+                question.addClass("animated bounceIn");
                 spm.css("opacity",1);
                 question.css("opacity",1);
                 spm.addClass("animated bounceIn");
 
-                //spm.animate(function(){
-                //
-                //})
 
             setTimeout(function () {
                     question.removeClass("bounceIn");

@@ -43,9 +43,10 @@
   .quizQuestion{
     margin:5px;
     border:1px solid green;
-    min-width:150px;
-//    width:100%;
-    float: left;
+//    min-width:150px;
+    width:100%;
+//    float: left;
+    clear: both;
     border-radius: 5px;
     padding: 10px;
     background: wheat;
@@ -59,7 +60,9 @@
   }
 
   li{
-    float:left;
+//    float:left;
+    width: 100%;
+    clear: both;
   }
  }
 
