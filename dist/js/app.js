@@ -20136,19 +20136,19 @@ var React = require('react'),
             setTimeout(function () {
                 cssId.css("opacity",0);
                 spm.addClass("animated bounceOut");
-            }, 300);
+            }, 250);
 
             setTimeout(function () {
                 spm.css("opacity",0);
                 question.addClass("animated bounceOut");
-            }, 450);
+            }, 350);
 
             setTimeout(function () {
                 question.css("opacity",0);
                 question.removeClass("animated bounceOut");
                 cssId.removeClass("animated bounceOut");
                 spm.removeClass("animated bounceOut");
-            }, 700);
+            }, 600);
 
             if(undefined === nextQuestion){
                 var state=react.state;
@@ -20163,13 +20163,13 @@ var React = require('react'),
                 // quiz finished
             } else {
             setTimeout(function () {
-                state.answer1="... Loading ...";
-                state.answer2="... Loading ...";
-                state.answer3="... Loading ...";
-                state.answer4="... Loading ...";
-                state.answer5="... Loading ...";
+               state.answer1="... Loading ...";
+               state.answer2="... Loading ...";
+               state.answer3="... Loading ...";
+               state.answer4="... Loading ...";
+               state.answer5="... Loading ...";
                react.getQuizFromApi(nextQuestion);
-            }, 750);
+            }, 950);
             }
         },
 
