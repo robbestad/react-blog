@@ -128,10 +128,7 @@ gulp.task('regularjs', function () {
 });
 
 gulp.task('minifyapp', ['jscripts','unminified'], function () {
-    return gulp.src([
-            'src/js/rainbow.js','src/js/language/**/*',
-            'bower_components/rebound-js/rebound.js',
-            'dist/js/app.js','src/js/ready.js'])
+    return gulp.src(['dist/js/app.js'])
         .pipe(uglify())
         .pipe(concat('app.min.js'))
         .pipe(gulp.dest('dist/js'));

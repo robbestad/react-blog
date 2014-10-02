@@ -376,7 +376,7 @@ var Menu = React.createClass({
             <div style={divStyle} id="menu">
                 <ul style={ulStyle}>
                     <li  style={liStyle} className="hidden-lg">
-                        <div onClick={this.toggleNavClick} style={inFront} id="hamburgerButton" className="Layout-hamburger" />
+                        <div onClick={this.toggleNavClick} style={inFront} id="hamburgerButton"  />
                     </li>
                     <li  style={liFontStyle}>
                         <div  onClick={this.toggleNavClick} style={inFront}    >Robbestad.com</div>

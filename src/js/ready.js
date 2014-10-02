@@ -258,17 +258,15 @@ function once (fn) {
 
 
 once(function(arg) {
-    var createHamburger = function(container, size, color, bgColor) {
-        //var ex = document.createElement('div');
-        var ex = container;//document.getElementById('hamburgerButton');
+    (function(container, size, color, bgColor) {
+        var ex = document.createElement('div');
         ex.className = 'Layout-hamburger';
         container.appendChild(ex);
         ex.style.backgroundColor = bgColor;
-        ex.style.opacity = 0.75;
+        ex.style.opacity = 1.0;
         ex.style.marginTop = (size * -0.4) + 'px';
         new hamburgerButton.HamburgerButton(ex, size, color);
-    };
-    createHamburger(document.getElementById('hamburgerButton'), 25, '#000000');
+    })(document.getElementById('hamburgerButton'), 25, '#000000');
 })();
 
 $(document).ready(function () {
