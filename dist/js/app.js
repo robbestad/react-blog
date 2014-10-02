@@ -23349,14 +23349,14 @@ module.exports = Sidebar;
 // Configure all the styles and dimensions for the button.
         this.padding = size * 0.1;
         this.size = size - this.padding * 2;
-        this.width = this.size;
+        this.width = this.size*1.25;
         this.height = this.size;
-        this.canvas.width = size;
+        this.canvas.width = this.width + this.padding *2;
         this.canvas.height = size;
         this.barHeight = this.size / 6;
         this.rotatedXlat = Math.sqrt((this.barHeight * this.barHeight) / 2);
         this.radius = this .size * 0.05;
-        var ab = (this.width - this.rotatedXlat);
+        var ab = (this.size - this.rotatedXlat);
         this.rotatedWidth = Math.sqrt(ab * ab + ab * ab);
         this.color = color;
 // Clear out the target container.
@@ -23459,21 +23459,6 @@ module.exports = Sidebar;
     } else if (typeof window != 'undefined') {
         window.hamburgerButton = hb;
     }
-    //createHamburger = function(container, size, color, bgColor) {
-    //    var ex = document.createElement('div');
-    //    ex.className = 'Layout-hamburger';
-    //    container.appendChild(ex);
-    //    ex.style.backgroundColor = bgColor;
-    //    ex.style.opacity = 0.75;
-    //    ex.style.marginTop = (size * -0.4) + 'px';
-    //    new hamburgerButton.HamburgerButton(ex, size, color);
-    //};
-    //var doit = function() {
-    //    var container = document.getElementById('hamburgerButton');
-    //    createHamburger(container, 25, '#000000');
-    //};
-
-    //document.addEventListener('DOMContentLoaded', doit);
 })();
 
 function once (fn) {
