@@ -259,7 +259,8 @@ function once (fn) {
 
 once(function(arg) {
     var createHamburger = function(container, size, color, bgColor) {
-        var ex = document.createElement('div');
+        //var ex = document.createElement('div');
+        var ex = document.getElementById('div');
         ex.className = 'Layout-hamburger';
         container.appendChild(ex);
         ex.style.backgroundColor = bgColor;
