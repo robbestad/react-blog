@@ -23484,9 +23484,9 @@ once(function(arg) {
         container.appendChild(ex);
         ex.style.backgroundColor = bgColor;
         ex.style.opacity = 1;
-        ex.style.marginTop = (size * -0.1) + 'px';
+        ex.style.marginTop = (size * -0.11) + 'px';
         new hamburgerButton.HamburgerButton(ex, size, color);
-    })(document.getElementById('hamburgerButton'), 38, '#000000');
+    })(document.getElementById('hamburgerButton'), 36, '#000000');
 })();
 
 $(document).ready(function () {

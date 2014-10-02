@@ -237,7 +237,7 @@ function once (fn) {
             arguments);
         fn = null;
         return f.value;
-    }
+    };
     f.hasResult = false;
     return f;
 }
