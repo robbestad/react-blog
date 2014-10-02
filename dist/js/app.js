@@ -23471,7 +23471,7 @@ function once (fn) {
             arguments);
         fn = null;
         return f.value;
-    }
+    };
     f.hasResult = false;
     return f;
 }
@@ -23483,10 +23483,10 @@ once(function(arg) {
         ex.className = 'Layout-hamburger';
         container.appendChild(ex);
         ex.style.backgroundColor = bgColor;
-        ex.style.opacity = 1;
-        ex.style.marginTop = (size * -0.11) + 'px';
+        ex.style.opacity = 0.45;
+        ex.style.marginTop = (size * -0.12) + 'px';
         new hamburgerButton.HamburgerButton(ex, size, color);
-    })(document.getElementById('hamburgerButton'), 36, '#000000');
+    })(document.getElementById('hamburgerButton'), 34, '#000000');
 })();
 
 $(document).ready(function () {
