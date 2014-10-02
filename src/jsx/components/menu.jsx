@@ -74,7 +74,7 @@ var Menu = React.createClass({
         this.replaceState({ width: window.innerWidth,
             height:window.innerHeight,searchVisible:this.state.searchVisible,
             sliderVisible:this.state.sliderVisible});
-
+            $("#disqus_thread").css("width",window.innerWidth+"px")
             if(window.innerWidth>=768){
                 if(this.state.searchVisible){
                     this.toggleSearchClick();
@@ -375,7 +375,7 @@ var Menu = React.createClass({
             <div style={divStyle} id="menu">
                 <ul style={ulStyle}>
                     <li  style={liStyle} className="hidden-lg">
-                        <div onClick={this.toggleNavClick} style={inFront}  className="Layout-hamburger fa fa-bars" />
+                        <div onClick={this.toggleNavClick} style={inFront} id="hamburgerButton" className="Layout-hamburger" />
                     </li>
                     <li  style={liFontStyle}>
                         <div  onClick={this.toggleNavClick} style={inFront}    >Robbestad.com</div>

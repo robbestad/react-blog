@@ -128,16 +128,19 @@ gulp.task('regularjs', function () {
 });
 
 gulp.task('minifyapp', ['jscripts','unminified'], function () {
-    return gulp.src(['dist/js/app.js','src/js/ready.js',
-        'src/js/rainbow.js','src/js/language/**/*'])
+    return gulp.src([
+            'src/js/rainbow.js','src/js/language/**/*',
+            'bower_components/rebound-js/rebound.js',
+            'dist/js/app.js','src/js/ready.js'])
         .pipe(uglify())
         .pipe(concat('app.min.js'))
         .pipe(gulp.dest('dist/js'));
 });
 
 gulp.task('unminified', ['jscripts'], function () {
-    return gulp.src(['dist/js/app.js','src/js/ready.js',
-        'src/js/rainbow.js','src/js/language/**/*'])
+    return gulp.src(['src/js/rainbow.js','src/js/language/**/*',
+        'bower_components/rebound-js/rebound.js',
+        'dist/js/app.js','src/js/ready.js'])
         .pipe(concat('app.js'))
         .pipe(gulp.dest('dist/js'));
 });

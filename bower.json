@@ -21,7 +21,8 @@
   ],
   "dependencies": {
     "iscroll": "~5.1.3",
-    "normalize-css": "~3.0.1"
+    "normalize-css": "~3.0.1",
+    "rebound-js": "https://github.com/facebook/rebound-js.git#~0.0.8"
   },
   "devDependencies": {
     "jquery": "~2.1.1",

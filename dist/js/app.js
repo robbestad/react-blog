@@ -1,3 +1,2804 @@
+/**
+ * Copyright 2013 Craig Campbell
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Rainbow is a simple code syntax highlighter
+ *
+ * @preserve @version 1.2
+ * @url rainbowco.de
+ */
+window['Rainbow'] = (function() {
+
+    /**
+     * array of replacements to process at the end
+     *
+     * @type {Object}
+     */
+    var replacements = {},
+
+        /**
+         * an array of start and end positions of blocks to be replaced
+         *
+         * @type {Object}
+         */
+        replacement_positions = {},
+
+        /**
+         * an array of the language patterns specified for each language
+         *
+         * @type {Object}
+         */
+        language_patterns = {},
+
+        /**
+         * an array of languages and whether they should bypass the default patterns
+         *
+         * @type {Object}
+         */
+        bypass_defaults = {},
+
+        /**
+         * processing level
+         *
+         * replacements are stored at this level so if there is a sub block of code
+         * (for example php inside of html) it runs at a different level
+         *
+         * @type {number}
+         */
+        CURRENT_LEVEL = 0,
+
+        /**
+         * constant used to refer to the default language
+         *
+         * @type {number}
+         */
+        DEFAULT_LANGUAGE = 0,
+
+        /**
+         * used as counters so we can selectively call setTimeout
+         * after processing a certain number of matches/replacements
+         *
+         * @type {number}
+         */
+        match_counter = 0,
+
+        /**
+         * @type {number}
+         */
+        replacement_counter = 0,
+
+        /**
+         * @type {null|string}
+         */
+        global_class,
+
+        /**
+         * @type {null|Function}
+         */
+        onHighlight;
+
+    /**
+     * adds a class to a given code block
+     *
+     * @param {Element} el
+     * @param {string} class_name   class name to add
+     * @returns void
+     */
+    function _addClass(el, class_name) {
+        el.className += el.className ? ' ' + class_name : class_name;
+    }
+
+    /**
+     * checks if a block has a given class
+     *
+     * @param {Element} el
+     * @param {string} class_name   class name to check for
+     * @returns {boolean}
+     */
+    function _hasClass(el, class_name) {
+        return (' ' + el.className + ' ').indexOf(' ' + class_name + ' ') > -1;
+    }
+
+    /**
+     * gets the language for this block of code
+     *
+     * @param {Element} block
+     * @returns {string|null}
+     */
+    function _getLanguageForBlock(block) {
+
+        // if this doesn't have a language but the parent does then use that
+        // this means if for example you have: <pre data-language="php">
+        // with a bunch of <code> blocks inside then you do not have
+        // to specify the language for each block
+        var language = block.getAttribute('data-language') || block.parentNode.getAttribute('data-language');
+
+        // this adds support for specifying language via a css class
+        // you can use the Google Code Prettify style: <pre class="lang-php">
+        // or the HTML5 style: <pre><code class="language-php">
+        if (!language) {
+            var pattern = /\blang(?:uage)?-(\w+)/,
+                match = block.className.match(pattern) || block.parentNode.className.match(pattern);
+
+            if (match) {
+                language = match[1];
+            }
+        }
+
+        return language;
+    }
+
+    /**
+     * makes sure html entities are always used for tags
+     *
+     * @param {string} code
+     * @returns {string}
+     */
+    function _htmlEntities(code) {
+        return code.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&(?![\w\#]+;)/g, '&amp;');
+    }
+
+    /**
+     * determines if a new match intersects with an existing one
+     *
+     * @param {number} start1    start position of existing match
+     * @param {number} end1      end position of existing match
+     * @param {number} start2    start position of new match
+     * @param {number} end2      end position of new match
+     * @returns {boolean}
+     */
+    function _intersects(start1, end1, start2, end2) {
+        if (start2 >= start1 && start2 < end1) {
+            return true;
+        }
+
+        return end2 > start1 && end2 < end1;
+    }
+
+    /**
+     * determines if two different matches have complete overlap with each other
+     *
+     * @param {number} start1   start position of existing match
+     * @param {number} end1     end position of existing match
+     * @param {number} start2   start position of new match
+     * @param {number} end2     end position of new match
+     * @returns {boolean}
+     */
+    function _hasCompleteOverlap(start1, end1, start2, end2) {
+
+        // if the starting and end positions are exactly the same
+        // then the first one should stay and this one should be ignored
+        if (start2 == start1 && end2 == end1) {
+            return false;
+        }
+
+        return start2 <= start1 && end2 >= end1;
+    }
+
+    /**
+     * determines if the match passed in falls inside of an existing match
+     * this prevents a regex pattern from matching inside of a bigger pattern
+     *
+     * @param {number} start - start position of new match
+     * @param {number} end - end position of new match
+     * @returns {boolean}
+     */
+    function _matchIsInsideOtherMatch(start, end) {
+        for (var key in replacement_positions[CURRENT_LEVEL]) {
+            key = parseInt(key, 10);
+
+            // if this block completely overlaps with another block
+            // then we should remove the other block and return false
+            if (_hasCompleteOverlap(key, replacement_positions[CURRENT_LEVEL][key], start, end)) {
+                delete replacement_positions[CURRENT_LEVEL][key];
+                delete replacements[CURRENT_LEVEL][key];
+            }
+
+            if (_intersects(key, replacement_positions[CURRENT_LEVEL][key], start, end)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * takes a string of code and wraps it in a span tag based on the name
+     *
+     * @param {string} name     name of the pattern (ie keyword.regex)
+     * @param {string} code     block of code to wrap
+     * @returns {string}
+     */
+    function _wrapCodeInSpan(name, code) {
+        return '<span class="' + name.replace(/\./g, ' ') + (global_class ? ' ' + global_class : '') + '">' + code + '</span>';
+    }
+
+    /**
+     * finds out the position of group match for a regular expression
+     *
+     * @see http://stackoverflow.com/questions/1985594/how-to-find-index-of-groups-in-match
+     *
+     * @param {Object} match
+     * @param {number} group_number
+     * @returns {number}
+     */
+    function _indexOfGroup(match, group_number) {
+        var index = 0,
+            i;
+
+        for (i = 1; i < group_number; ++i) {
+            if (match[i]) {
+                index += match[i].length;
+            }
+        }
+
+        return index;
+    }
+
+    /**
+     * matches a regex pattern against a block of code
+     * finds all matches that should be processed and stores the positions
+     * of where they should be replaced within the string
+     *
+     * this is where pretty much all the work is done but it should not
+     * be called directly
+     *
+     * @param {RegExp} pattern
+     * @param {string} code
+     * @returns void
+     */
+    function _processPattern(regex, pattern, code, callback)
+    {
+        if (typeof regex === "undefined" || regex === null) {
+            //console.warn("undefined regular expression")
+            return callback();
+        }
+        var match = regex.exec(code);
+
+        if (!match) {
+            return callback();
+        }
+
+        ++match_counter;
+
+        // treat match 0 the same way as name
+        if (!pattern['name'] && typeof pattern['matches'][0] == 'string') {
+            pattern['name'] = pattern['matches'][0];
+            delete pattern['matches'][0];
+        }
+
+        var replacement = match[0],
+            start_pos = match.index,
+            end_pos = match[0].length + start_pos,
+
+            /**
+             * callback to process the next match of this pattern
+             */
+            processNext = function() {
+                var nextCall = function() {
+                    _processPattern(regex, pattern, code, callback);
+                };
+
+                // every 100 items we process let's call set timeout
+                // to let the ui breathe a little
+                return match_counter % 100 > 0 ? nextCall() : setTimeout(nextCall, 0);
+            };
+
+        // if this is not a child match and it falls inside of another
+        // match that already happened we should skip it and continue processing
+        if (_matchIsInsideOtherMatch(start_pos, end_pos)) {
+            return processNext();
+        }
+
+        /**
+         * callback for when a match was successfully processed
+         *
+         * @param {string} replacement
+         * @returns void
+         */
+        var onMatchSuccess = function(replacement) {
+                // if this match has a name then wrap it in a span tag
+                if (pattern['name']) {
+                    replacement = _wrapCodeInSpan(pattern['name'], replacement);
+                }
+
+                // console.log('LEVEL', CURRENT_LEVEL, 'replace', match[0], 'with', replacement, 'at position', start_pos, 'to', end_pos);
+
+                // store what needs to be replaced with what at this position
+                if (!replacements[CURRENT_LEVEL]) {
+                    replacements[CURRENT_LEVEL] = {};
+                    replacement_positions[CURRENT_LEVEL] = {};
+                }
+
+                replacements[CURRENT_LEVEL][start_pos] = {
+                    'replace': match[0],
+                    'with': replacement
+                };
+
+                // store the range of this match so we can use it for comparisons
+                // with other matches later
+                replacement_positions[CURRENT_LEVEL][start_pos] = end_pos;
+
+                // process the next match
+                processNext();
+            },
+
+            // if this pattern has sub matches for different groups in the regex
+            // then we should process them one at a time by rerunning them through
+            // this function to generate the new replacement
+            //
+            // we run through them backwards because the match position of earlier
+            // matches will not change depending on what gets replaced in later
+            // matches
+            group_keys = keys(pattern['matches']),
+
+            /**
+             * callback for processing a sub group
+             *
+             * @param {number} i
+             * @param {Array} group_keys
+             * @param {Function} callback
+             */
+            processGroup = function(i, group_keys, callback) {
+                if (i >= group_keys.length) {
+                    return callback(replacement);
+                }
+
+                var processNextGroup = function() {
+                        processGroup(++i, group_keys, callback);
+                    },
+                    block = match[group_keys[i]];
+
+                // if there is no match here then move on
+                if (!block) {
+                    return processNextGroup();
+                }
+
+                var group = pattern['matches'][group_keys[i]],
+                    language = group['language'],
+
+                    /**
+                     * process group is what group we should use to actually process
+                     * this match group
+                     *
+                     * for example if the subgroup pattern looks like this
+                     * 2: {
+                     *     'name': 'keyword',
+                     *     'pattern': /true/g
+                     * }
+                     *
+                     * then we use that as is, but if it looks like this
+                     *
+                     * 2: {
+                     *     'name': 'keyword',
+                     *     'matches': {
+                     *          'name': 'special',
+                     *          'pattern': /whatever/g
+                     *      }
+                     * }
+                     *
+                     * we treat the 'matches' part as the pattern and keep
+                     * the name around to wrap it with later
+                     */
+                    process_group = group['name'] && group['matches'] ? group['matches'] : group,
+
+                    /**
+                     * takes the code block matched at this group, replaces it
+                     * with the highlighted block, and optionally wraps it with
+                     * a span with a name
+                     *
+                     * @param {string} block
+                     * @param {string} replace_block
+                     * @param {string|null} match_name
+                     */
+                    _replaceAndContinue = function(block, replace_block, match_name) {
+                        replacement = _replaceAtPosition(_indexOfGroup(match, group_keys[i]), block, match_name ? _wrapCodeInSpan(match_name, replace_block) : replace_block, replacement);
+                        processNextGroup();
+                    };
+
+                // if this is a sublanguage go and process the block using that language
+                if (language) {
+                    return _highlightBlockForLanguage(block, language, function(code) {
+                        _replaceAndContinue(block, code);
+                    });
+                }
+
+                // if this is a string then this match is directly mapped to selector
+                // so all we have to do is wrap it in a span and continue
+                if (typeof group === 'string') {
+                    return _replaceAndContinue(block, block, group);
+                }
+
+                // the process group can be a single pattern or an array of patterns
+                // _processCodeWithPatterns always expects an array so we convert it here
+                _processCodeWithPatterns(block, process_group.length ? process_group : [process_group], function(code) {
+                    _replaceAndContinue(block, code, group['matches'] ? group['name'] : 0);
+                });
+            };
+
+        processGroup(0, group_keys, onMatchSuccess);
+    }
+
+    /**
+     * should a language bypass the default patterns?
+     *
+     * if you call Rainbow.extend() and pass true as the third argument
+     * it will bypass the defaults
+     */
+    function _bypassDefaultPatterns(language)
+    {
+        return bypass_defaults[language];
+    }
+
+    /**
+     * returns a list of regex patterns for this language
+     *
+     * @param {string} language
+     * @returns {Array}
+     */
+    function _getPatternsForLanguage(language) {
+        var patterns = language_patterns[language] || [],
+            default_patterns = language_patterns[DEFAULT_LANGUAGE] || [];
+
+        return _bypassDefaultPatterns(language) ? patterns : patterns.concat(default_patterns);
+    }
+
+    /**
+     * substring replace call to replace part of a string at a certain position
+     *
+     * @param {number} position         the position where the replacement should happen
+     * @param {string} replace          the text we want to replace
+     * @param {string} replace_with     the text we want to replace it with
+     * @param {string} code             the code we are doing the replacing in
+     * @returns {string}
+     */
+    function _replaceAtPosition(position, replace, replace_with, code) {
+        var sub_string = code.substr(position);
+        return code.substr(0, position) + sub_string.replace(replace, replace_with);
+    }
+
+   /**
+     * sorts an object by index descending
+     *
+     * @param {Object} object
+     * @return {Array}
+     */
+    function keys(object) {
+        var locations = [],
+            replacement,
+            pos;
+
+        for(var location in object) {
+            if (object.hasOwnProperty(location)) {
+                locations.push(location);
+            }
+        }
+
+        // numeric descending
+        return locations.sort(function(a, b) {
+            return b - a;
+        });
+    }
+
+    /**
+     * processes a block of code using specified patterns
+     *
+     * @param {string} code
+     * @param {Array} patterns
+     * @returns void
+     */
+    function _processCodeWithPatterns(code, patterns, callback)
+    {
+        // we have to increase the level here so that the
+        // replacements will not conflict with each other when
+        // processing sub blocks of code
+        ++CURRENT_LEVEL;
+
+        // patterns are processed one at a time through this function
+        function _workOnPatterns(patterns, i)
+        {
+            // still have patterns to process, keep going
+            if (i < patterns.length) {
+                return _processPattern(patterns[i]['pattern'], patterns[i], code, function() {
+                    _workOnPatterns(patterns, ++i);
+                });
+            }
+
+            // we are done processing the patterns
+            // process the replacements and update the DOM
+            _processReplacements(code, function(code) {
+
+                // when we are done processing replacements
+                // we are done at this level so we can go back down
+                delete replacements[CURRENT_LEVEL];
+                delete replacement_positions[CURRENT_LEVEL];
+                --CURRENT_LEVEL;
+                callback(code);
+            });
+        }
+
+        _workOnPatterns(patterns, 0);
+    }
+
+    /**
+     * process replacements in the string of code to actually update the markup
+     *
+     * @param {string} code         the code to process replacements in
+     * @param {Function} onComplete   what to do when we are done processing
+     * @returns void
+     */
+    function _processReplacements(code, onComplete) {
+
+        /**
+         * processes a single replacement
+         *
+         * @param {string} code
+         * @param {Array} positions
+         * @param {number} i
+         * @param {Function} onComplete
+         * @returns void
+         */
+        function _processReplacement(code, positions, i, onComplete) {
+            if (i < positions.length) {
+                ++replacement_counter;
+                var pos = positions[i],
+                    replacement = replacements[CURRENT_LEVEL][pos];
+                code = _replaceAtPosition(pos, replacement['replace'], replacement['with'], code);
+
+                // process next function
+                var next = function() {
+                    _processReplacement(code, positions, ++i, onComplete);
+                };
+
+                // use a timeout every 250 to not freeze up the UI
+                return replacement_counter % 250 > 0 ? next() : setTimeout(next, 0);
+            }
+
+            onComplete(code);
+        }
+
+        var string_positions = keys(replacements[CURRENT_LEVEL]);
+        _processReplacement(code, string_positions, 0, onComplete);
+    }
+
+    /**
+     * takes a string of code and highlights it according to the language specified
+     *
+     * @param {string} code
+     * @param {string} language
+     * @param {Function} onComplete
+     * @returns void
+     */
+    function _highlightBlockForLanguage(code, language, onComplete) {
+        var patterns = _getPatternsForLanguage(language);
+        _processCodeWithPatterns(_htmlEntities(code), patterns, onComplete);
+    }
+
+    /**
+     * highlight an individual code block
+     *
+     * @param {Array} code_blocks
+     * @param {number} i
+     * @returns void
+     */
+    function _highlightCodeBlock(code_blocks, i, onComplete) {
+        if (i < code_blocks.length) {
+            var block = code_blocks[i],
+                language = _getLanguageForBlock(block);
+
+            if (!_hasClass(block, 'rainbow') && language) {
+                language = language.toLowerCase();
+
+                _addClass(block, 'rainbow');
+
+                return _highlightBlockForLanguage(block.innerHTML, language, function(code) {
+                    block.innerHTML = code;
+
+                    // reset the replacement arrays
+                    replacements = {};
+                    replacement_positions = {};
+
+                    // if you have a listener attached tell it that this block is now highlighted
+                    if (onHighlight) {
+                        onHighlight(block, language);
+                    }
+
+                    // process the next block
+                    setTimeout(function() {
+                        _highlightCodeBlock(code_blocks, ++i, onComplete);
+                    }, 0);
+                });
+            }
+            return _highlightCodeBlock(code_blocks, ++i, onComplete);
+        }
+
+        if (onComplete) {
+            onComplete();
+        }
+    }
+
+    /**
+     * start highlighting all the code blocks
+     *
+     * @returns void
+     */
+    function _highlight(node, onComplete) {
+
+        // the first argument can be an Event or a DOM Element
+        // I was originally checking instanceof Event but that makes it break
+        // when using mootools
+        //
+        // @see https://github.com/ccampbell/rainbow/issues/32
+        //
+        node = node && typeof node.getElementsByTagName == 'function' ? node : document;
+
+        var pre_blocks = node.getElementsByTagName('pre'),
+            code_blocks = node.getElementsByTagName('code'),
+            i,
+            final_pre_blocks = [],
+            final_code_blocks = [];
+
+        // first loop through all pre blocks to find which ones to highlight
+        // also strip whitespace
+        for (i = 0; i < pre_blocks.length; ++i) {
+
+            // strip whitespace around code tags when they are inside of a pre tag
+            // this makes the themes look better because you can't accidentally
+            // add extra linebreaks at the start and end
+            //
+            // when the pre tag contains a code tag then strip any extra whitespace
+            // for example
+            // <pre>
+            //      <code>var foo = true;</code>
+            // </pre>
+            //
+            // will become
+            // <pre><code>var foo = true;</code></pre>
+            //
+            // if you want to preserve whitespace you can use a pre tag on its own
+            // without a code tag inside of it
+            if (pre_blocks[i].getElementsByTagName('code').length) {
+                pre_blocks[i].innerHTML = pre_blocks[i].innerHTML.replace(/^\s+/, '').replace(/\s+$/, '');
+                continue;
+            }
+
+            // if the pre block has no code blocks then we are going to want to
+            // process it directly
+            final_pre_blocks.push(pre_blocks[i]);
+        }
+
+        // @see http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
+        // we are going to process all <code> blocks
+        for (i = 0; i < code_blocks.length; ++i) {
+            final_code_blocks.push(code_blocks[i]);
+        }
+
+        _highlightCodeBlock(final_code_blocks.concat(final_pre_blocks), 0, onComplete);
+    }
+
+    /**
+     * public methods
+     */
+    return {
+
+        /**
+         * extends the language pattern matches
+         *
+         * @param {*} language     name of language
+         * @param {*} patterns      array of patterns to add on
+         * @param {boolean|null} bypass      if true this will bypass the default language patterns
+         */
+        extend: function(language, patterns, bypass) {
+
+            // if there is only one argument then we assume that we want to
+            // extend the default language rules
+            if (arguments.length == 1) {
+                patterns = language;
+                language = DEFAULT_LANGUAGE;
+            }
+
+            bypass_defaults[language] = bypass;
+            language_patterns[language] = patterns.concat(language_patterns[language] || []);
+        },
+
+        /**
+         * call back to let you do stuff in your app after a piece of code has been highlighted
+         *
+         * @param {Function} callback
+         */
+        onHighlight: function(callback) {
+            onHighlight = callback;
+        },
+
+        /**
+         * method to set a global class that will be applied to all spans
+         *
+         * @param {string} class_name
+         */
+        addClass: function(class_name) {
+            global_class = class_name;
+        },
+
+        /**
+         * starts the magic rainbow
+         *
+         * @returns void
+         */
+        color: function() {
+
+            // if you want to straight up highlight a string you can pass the string of code,
+            // the language, and a callback function
+            if (typeof arguments[0] == 'string') {
+                return _highlightBlockForLanguage(arguments[0], arguments[1], arguments[2]);
+            }
+
+            // if you pass a callback function then we rerun the color function
+            // on all the code and call the callback function on complete
+            if (typeof arguments[0] == 'function') {
+                return _highlight(0, arguments[0]);
+            }
+
+            // otherwise we use whatever node you passed in with an optional
+            // callback function as the second parameter
+            _highlight(arguments[0], arguments[1]);
+        }
+    };
+}) ();
+
+/**
+ * adds event listener to start highlighting
+ */
+(function() {
+    if (document.addEventListener) {
+        return document.addEventListener('DOMContentLoaded', Rainbow.color, false);
+    }
+}) ();
+
+// When using Google closure compiler in advanced mode some methods
+// get renamed.  This keeps a public reference to these methods so they can
+// still be referenced from outside this library.
+Rainbow["onHighlight"] = Rainbow.onHighlight;
+Rainbow["addClass"] = Rainbow.addClass;
+
+/**
+* C# patterns
+*
+* @author Dan Stewart
+* @version 1.0.1
+*/
+Rainbow.extend('csharp', [
+	{
+        // @see http://msdn.microsoft.com/en-us/library/23954zh5.aspx
+		'name': 'constant',
+		'pattern': /\b(false|null|true)\b/g
+	},
+	{
+		// @see http://msdn.microsoft.com/en-us/library/x53a06bb%28v=vs.100%29.aspx
+		// Does not support putting an @ in front of a keyword which makes it not a keyword anymore.
+		'name': 'keyword',
+		'pattern': /\b(abstract|add|alias|ascending|as|base|bool|break|byte|case|catch|char|checked|class|const|continue|decimal|default|delegate|descending|double|do|dynamic|else|enum|event|explicit|extern|false|finally|fixed|float|foreach|for|from|get|global|goto|group|if|implicit|int|interface|internal|into|in|is|join|let|lock|long|namespace|new|object|operator|orderby|out|override|params|partial|private|protected|public|readonly|ref|remove|return|sbyte|sealed|select|set|short|sizeof|stackalloc|static|string|struct|switch|this|throw|try|typeof|uint|unchecked|ulong|unsafe|ushort|using|value|var|virtual|void|volatile|where|while|yield)\b/g
+	},
+    {
+        'matches': {
+            1: 'keyword',
+            2: {
+                'name': 'support.class',
+                'pattern': /\w+/g
+            }
+        },
+        'pattern': /(typeof)\s([^\$].*?)(\)|;)/g
+    },
+    {
+        'matches': {
+            1: 'keyword.namespace',
+            2: {
+                'name': 'support.namespace',
+                'pattern': /\w+/g
+            }
+        },
+        'pattern': /\b(namespace)\s(.*?);/g
+    },
+    {
+        'matches': {
+            1: 'storage.modifier',
+            2: 'storage.class',
+            3: 'entity.name.class',
+            4: 'storage.modifier.extends',
+            5: 'entity.other.inherited-class'
+        },
+        'pattern': /\b(abstract|sealed)?\s?(class)\s(\w+)(\sextends\s)?([\w\\]*)?\s?\{?(\n|\})/g
+    },
+    {
+        'name': 'keyword.static',
+        'pattern': /\b(static)\b/g
+    },
+    {
+        'matches': {
+            1: 'keyword.new',
+			2: {
+                'name': 'support.class',
+                'pattern': /\w+/g
+            }
+
+        },
+        'pattern': /\b(new)\s([^\$].*?)(?=\)|\(|;|&)/g
+    },
+	{
+		'name': 'string',
+		'pattern': /(")(.*?)\1/g
+	},
+	{
+		'name': 'integer',
+		'pattern': /\b(0x[\da-f]+|\d+)\b/g
+	},
+	{
+        'name': 'comment',
+        'pattern': /\/\*[\s\S]*?\*\/|(\/\/)[\s\S]*?$/gm
+    },
+	{
+		'name': 'operator',
+		// @see http://msdn.microsoft.com/en-us/library/6a71f45d%28v=vs.100%29.aspx
+		// ++ += + -- -= - <<= << <= => >>= >> >= != ! ~ ^ || && &= & ?? :: : *= * |= %= |= == =
+		'pattern': /(\+\+|\+=|\+|--|-=|-|&lt;&lt;=|&lt;&lt;|&lt;=|=&gt;|&gt;&gt;=|&gt;&gt;|&gt;=|!=|!|~|\^|\|\||&amp;&amp;|&amp;=|&amp;|\?\?|::|:|\*=|\*|\/=|%=|\|=|==|=)/g
+	},
+    {
+		// @see http://msdn.microsoft.com/en-us/library/ed8yd1ha%28v=vs.100%29.aspx
+		'name': 'preprocessor',
+		'pattern': /(\#if|\#else|\#elif|\#endif|\#define|\#undef|\#warning|\#error|\#line|\#region|\#endregion|\#pragma)[\s\S]*?$/gm
+	}
+], true);
+
+/**
+ * CSS patterns
+ *
+ * @author Craig Campbell
+ * @version 1.0.9
+ */
+Rainbow.extend('css', [
+    {
+        'name': 'comment',
+        'pattern': /\/\*[\s\S]*?\*\//gm
+    },
+    {
+        'name': 'constant.hex-color',
+        'pattern': /#([a-f0-9]{3}|[a-f0-9]{6})(?=;|\s|,|\))/gi
+    },
+    {
+        'matches': {
+            1: 'constant.numeric',
+            2: 'keyword.unit'
+        },
+        'pattern': /(\d+)(px|em|cm|s|%)?/g
+    },
+    {
+        'name': 'string',
+        'pattern': /('|")(.*?)\1/g
+    },
+    {
+        'name': 'support.css-property',
+        'matches': {
+            1: 'support.vendor-prefix'
+        },
+        'pattern': /(-o-|-moz-|-webkit-|-ms-)?[\w-]+(?=\s?:)(?!.*\{)/g
+    },
+    {
+        'matches': {
+            1: [
+                {
+                    'name': 'entity.name.sass',
+                    'pattern': /&amp;/g
+                },
+                {
+                    'name': 'direct-descendant',
+                    'pattern': /&gt;/g
+                },
+                {
+                    'name': 'entity.name.class',
+                    'pattern': /\.[\w\-_]+/g
+                },
+                {
+                    'name': 'entity.name.id',
+                    'pattern': /\#[\w\-_]+/g
+                },
+                {
+                    'name': 'entity.name.pseudo',
+                    'pattern': /:[\w\-_]+/g
+                },
+                {
+                    'name': 'entity.name.tag',
+                    'pattern': /\w+/g
+                }
+            ]
+        },
+        'pattern': /([\w\ ,\n:\.\#\&\;\-_]+)(?=.*\{)/g
+    },
+    {
+        'matches': {
+            2: 'support.vendor-prefix',
+            3: 'support.css-value'
+        },
+        'pattern': /(:|,)\s*(-o-|-moz-|-webkit-|-ms-)?([a-zA-Z-]*)(?=\b)(?!.*\{)/g
+    }
+], true);
+
+/**
+ * Generic language patterns
+ *
+ * @author Craig Campbell
+ * @version 1.0.11
+ */
+Rainbow.extend([
+    {
+        'matches': {
+            1: [
+                {
+                    'name': 'keyword.operator',
+                    'pattern': /\=|\+/g
+                },
+                {
+                    'name': 'keyword.dot',
+                    'pattern': /\./g
+                }
+            ],
+            2: {
+                'name': 'string',
+                'matches': {
+                    'name': 'constant.character.escape',
+                    'pattern': /\\('|"){1}/g
+                }
+            }
+        },
+        'pattern': /(\(|\s|\[|\=|:|\+|\.)(('|")([^\\\1]|\\.)*?(\3))/gm
+    },
+    {
+        'name': 'comment',
+        'pattern': /\/\*[\s\S]*?\*\/|(\/\/|\#)[\s\S]*?$/gm
+    },
+    {
+        'name': 'constant.numeric',
+        'pattern': /\b(\d+(\.\d+)?(e(\+|\-)?\d+)?(f|d)?|0x[\da-f]+)\b/gi
+    },
+    {
+        'matches': {
+            1: 'keyword'
+        },
+        'pattern': /\b(and|array|as|b(ool(ean)?|reak)|c(ase|atch|har|lass|on(st|tinue))|d(ef|elete|o(uble)?)|e(cho|lse(if)?|xit|xtends|xcept)|f(inally|loat|or(each)?|unction)|global|if|import|int(eger)?|long|new|object|or|pr(int|ivate|otected)|public|return|self|st(ring|ruct|atic)|switch|th(en|is|row)|try|(un)?signed|var|void|while)(?=\(|\b)/gi
+    },
+    {
+        'name': 'constant.language',
+        'pattern': /true|false|null/g
+    },
+    {
+        'name': 'keyword.operator',
+        'pattern': /\+|\!|\-|&(gt|lt|amp);|\||\*|\=/g
+    },
+    {
+        'matches': {
+            1: 'function.call'
+        },
+        'pattern': /(\w+?)(?=\()/g
+    },
+    {
+        'matches': {
+            1: 'storage.function',
+            2: 'entity.name.function'
+        },
+        'pattern': /(function)\s(.*?)(?=\()/g
+    }
+]);
+
+/**
+ * HTML patterns
+ *
+ * @author Craig Campbell
+ * @version 1.0.9
+ */
+Rainbow.extend('html', [
+    {
+        'name': 'source.php.embedded',
+        'matches': {
+            2: {
+                'language': 'php'
+            }
+        },
+        'pattern': /&lt;\?=?(?!xml)(php)?([\s\S]*?)(\?&gt;)/gm
+    },
+    {
+        'name': 'source.css.embedded',
+        'matches': {
+            1: {
+                'matches': {
+                    1: 'support.tag.style',
+                    2: [
+                        {
+                            'name': 'entity.tag.style',
+                            'pattern': /^style/g
+                        },
+                        {
+                            'name': 'string',
+                            'pattern': /('|")(.*?)(\1)/g
+                        },
+                        {
+                            'name': 'entity.tag.style.attribute',
+                            'pattern': /(\w+)/g
+                        }
+                    ],
+                    3: 'support.tag.style'
+                },
+                'pattern': /(&lt;\/?)(style.*?)(&gt;)/g
+            },
+            2: {
+                'language': 'css'
+            },
+            3: 'support.tag.style',
+            4: 'entity.tag.style',
+            5: 'support.tag.style'
+        },
+        'pattern': /(&lt;style.*?&gt;)([\s\S]*?)(&lt;\/)(style)(&gt;)/gm
+    },
+    {
+        'name': 'source.js.embedded',
+        'matches': {
+            1: {
+                'matches': {
+                    1: 'support.tag.script',
+                    2: [
+                        {
+                            'name': 'entity.tag.script',
+                            'pattern': /^script/g
+                        },
+
+                        {
+                            'name': 'string',
+                            'pattern': /('|")(.*?)(\1)/g
+                        },
+                        {
+                            'name': 'entity.tag.script.attribute',
+                            'pattern': /(\w+)/g
+                        }
+                    ],
+                    3: 'support.tag.script'
+                },
+                'pattern': /(&lt;\/?)(script.*?)(&gt;)/g
+            },
+            2: {
+                'language': 'javascript'
+            },
+            3: 'support.tag.script',
+            4: 'entity.tag.script',
+            5: 'support.tag.script'
+        },
+        'pattern': /(&lt;script(?! src).*?&gt;)([\s\S]*?)(&lt;\/)(script)(&gt;)/gm
+    },
+    {
+        'name': 'comment.html',
+        'pattern': /&lt;\!--[\S\s]*?--&gt;/g
+    },
+    {
+        'matches': {
+            1: 'support.tag.open',
+            2: 'support.tag.close'
+        },
+        'pattern': /(&lt;)|(\/?\??&gt;)/g
+    },
+    {
+        'name': 'support.tag',
+        'matches': {
+            1: 'support.tag',
+            2: 'support.tag.special',
+            3: 'support.tag-name'
+        },
+        'pattern': /(&lt;\??)(\/|\!?)(\w+)/g
+    },
+    {
+        'matches': {
+            1: 'support.attribute'
+        },
+        'pattern': /([a-z-]+)(?=\=)/gi
+    },
+    {
+        'matches': {
+            1: 'support.operator',
+            2: 'string.quote',
+            3: 'string.value',
+            4: 'string.quote'
+        },
+        'pattern': /(=)('|")(.*?)(\2)/g
+    },
+    {
+        'matches': {
+            1: 'support.operator',
+            2: 'support.value'
+        },
+        'pattern': /(=)([a-zA-Z\-0-9]*)\b/g
+    },
+    {
+        'matches': {
+            1: 'support.attribute'
+        },
+        'pattern': /\s(\w+)(?=\s|&gt;)(?![\s\S]*&lt;)/g
+    }
+], true);
+
+/**
+* Java patterns
+*
+* @author Leo Accend
+* @version 1.0.0
+*/
+Rainbow.extend( "java", [
+  {
+    name: "constant",
+    pattern: /\b(false|null|true|[A-Z_]+)\b/g
+  },
+  {
+    matches: {
+      1: "keyword",
+      2: "support.namespace"
+    },
+    pattern: /(import|package)\s(.+)/g
+  },
+  {
+    // see http://docs.oracle.com/javase/tutorial/java/nutsandbolts/_keywords.html
+    name: "keyword",
+    pattern: /\b(abstract|assert|boolean|break|byte|case|catch|char|class|const|continue|default|do|double|else|enum|extends|final|finally|float|for|goto|if|implements|import|instanceof|int|interface|long|native|new|package|private|protected|public|return|short|static|strictfp|super|switch|synchronized|this|throw|throws|transient|try|void|volatile|while)\b/g
+  },
+  {
+    name: "string",
+    pattern: /(".*?")/g
+  },
+  {
+    name: "char",
+    pattern: /(')(.|\\.|\\u[\dA-Fa-f]{4})\1/g
+  },
+  {
+    name: "integer",
+    pattern: /\b(0x[\da-f]+|\d+)L?\b/g
+  },
+  {
+    name: "comment",
+    pattern: /\/\*[\s\S]*?\*\/|(\/\/).*?$/gm
+  },
+  {
+    name: "support.annotation",
+    pattern: /@\w+/g
+  },
+  {
+    matches: {
+      1: "entity.function"
+    },
+    pattern: /([^@\.\s]+)\(/g
+  },
+  {
+    name: "entity.class",
+    pattern: /\b([A-Z]\w*)\b/g
+  },
+  {
+    // see http://docs.oracle.com/javase/tutorial/java/nutsandbolts/operators.html
+    name: "operator",
+    pattern: /(\+{1,2}|-{1,2}|~|!|\*|\/|%|(?:&lt;){1,2}|(?:&gt;){1,3}|instanceof|(?:&amp;){1,2}|\^|\|{1,2}|\?|:|(?:=|!|\+|-|\*|\/|%|\^|\||(?:&lt;){1,2}|(?:&gt;){1,3})?=)/g
+  }
+], true );
+
+/**
+ * Javascript patterns
+ *
+ * @author Craig Campbell
+ * @version 1.0.9
+ */
+Rainbow.extend('javascript', [
+
+    /**
+     * matches $. or $(
+     */
+    {
+        'name': 'selector',
+        'pattern': /(\s|^)\$(?=\.|\()/g
+    },
+    {
+        'name': 'support',
+        'pattern': /\b(window|document)\b/g
+    },
+    {
+        'matches': {
+            1: 'support.property'
+        },
+        'pattern': /\.(length|node(Name|Value))\b/g
+    },
+    {
+        'matches': {
+            1: 'support.function'
+        },
+        'pattern': /(setTimeout|setInterval)(?=\()/g
+
+    },
+    {
+        'matches': {
+            1: 'support.method'
+        },
+        'pattern': /\.(getAttribute|push|getElementById|getElementsByClassName|log|setTimeout|setInterval)(?=\()/g
+    },
+
+    /**
+     * matches any escaped characters inside of a js regex pattern
+     *
+     * @see https://github.com/ccampbell/rainbow/issues/22
+     *
+     * this was causing single line comments to fail so it now makes sure
+     * the opening / is not directly followed by a *
+     *
+     * @todo check that there is valid regex in match group 1
+     */
+    {
+        'name': 'string.regexp',
+        'matches': {
+            1: 'string.regexp.open',
+            2: {
+                'name': 'constant.regexp.escape',
+                'pattern': /\\(.){1}/g
+            },
+            3: 'string.regexp.close',
+            4: 'string.regexp.modifier'
+        },
+        'pattern': /(\/)(?!\*)(.+)(\/)([igm]{0,3})/g
+    },
+
+    /**
+     * matches runtime function declarations
+     */
+    {
+        'matches': {
+            1: 'storage',
+            3: 'entity.function'
+        },
+        'pattern': /(var)?(\s|^)(\S*)(?=\s?=\s?function\()/g
+    },
+
+    /**
+     * matches constructor call
+     */
+    {
+        'matches': {
+            1: 'keyword',
+            2: 'entity.function'
+        },
+        'pattern': /(new)\s+(.*)(?=\()/g
+    },
+
+    /**
+     * matches any function call in the style functionName: function()
+     */
+    {
+        'name': 'entity.function',
+        'pattern': /(\w+)(?=:\s{0,}function)/g
+    }
+]);
+
+/**
+ * PHP patterns
+ *
+ * @author Craig Campbell
+ * @version 1.0.8
+ */
+Rainbow.extend('php', [
+    {
+        'name': 'support',
+        'pattern': /\becho\b/g
+    },
+    {
+        'matches': {
+            1: 'variable.dollar-sign',
+            2: 'variable'
+        },
+        'pattern': /(\$)(\w+)\b/g
+    },
+    {
+        'name': 'constant.language',
+        'pattern': /true|false|null/ig
+    },
+    {
+        'name': 'constant',
+        'pattern': /\b[A-Z0-9_]{2,}\b/g
+    },
+    {
+        'name': 'keyword.dot',
+        'pattern': /\./g
+    },
+    {
+        'name': 'keyword',
+        'pattern': /\b(die|end(for(each)?|switch|if)|case|require(_once)?|include(_once)?)(?=\(|\b)/g
+    },
+    {
+        'matches': {
+            1: 'keyword',
+            2: {
+                'name': 'support.class',
+                'pattern': /\w+/g
+            }
+        },
+        'pattern': /(instanceof)\s([^\$].*?)(\)|;)/g
+    },
+
+    /**
+     * these are the top 50 most used PHP functions
+     * found from running a script and checking the frequency of each function
+     * over a bunch of popular PHP frameworks then combining the results
+     */
+    {
+        'matches': {
+            1: 'support.function'
+        },
+        'pattern': /\b(array(_key_exists|_merge|_keys|_shift)?|isset|count|empty|unset|printf|is_(array|string|numeric|object)|sprintf|each|date|time|substr|pos|str(len|pos|tolower|_replace|totime)?|ord|trim|in_array|implode|end|preg_match|explode|fmod|define|link|list|get_class|serialize|file|sort|mail|dir|idate|log|intval|header|chr|function_exists|dirname|preg_replace|file_exists)(?=\()/g
+    },
+    {
+        'name': 'variable.language.php-tag',
+        'pattern': /(&lt;\?(php)?|\?&gt;)/g
+    },
+    {
+        'matches': {
+            1: 'keyword.namespace',
+            2: {
+                'name': 'support.namespace',
+                'pattern': /\w+/g
+            }
+        },
+        'pattern': /\b(namespace|use)\s(.*?);/g
+    },
+    {
+        'matches': {
+            1: 'storage.modifier',
+            2: 'storage.class',
+            3: 'entity.name.class',
+            4: 'storage.modifier.extends',
+            5: 'entity.other.inherited-class',
+            6: 'storage.modifier.extends',
+            7: 'entity.other.inherited-class'
+        },
+        'pattern': /\b(abstract|final)?\s?(class|interface|trait)\s(\w+)(\sextends\s)?([\w\\]*)?(\simplements\s)?([\w\\]*)?\s?\{?(\n|\})/g
+    },
+    {
+        'name': 'keyword.static',
+        'pattern': /self::|static::/g
+    },
+    {
+        'matches': {
+            1: 'storage.function',
+            2: 'support.magic'
+        },
+        'pattern': /(function)\s(__.*?)(?=\()/g
+    },
+    {
+        'matches': {
+            1: 'keyword.new',
+            2: {
+                'name': 'support.class',
+                'pattern': /\w+/g
+            }
+        },
+        'pattern': /\b(new)\s([^\$].*?)(?=\)|\(|;)/g
+    },
+    {
+        'matches': {
+            1: {
+                'name': 'support.class',
+                'pattern': /\w+/g
+            },
+            2: 'keyword.static'
+        },
+        'pattern': /([\w\\]*?)(::)(?=\b|\$)/g
+    },
+    {
+        'matches': {
+            2: {
+                'name': 'support.class',
+                'pattern': /\w+/g
+            }
+        },
+        'pattern': /(\(|,\s?)([\w\\]*?)(?=\s\$)/g
+    }
+]);
+
+/**
+ * Python patterns
+ *
+ * @author Craig Campbell
+ * @version 1.0.9
+ */
+Rainbow.extend('python', [
+    /**
+     * don't highlight self as a keyword
+     */
+    {
+        'name': 'variable.self',
+        'pattern': /self/g
+    },
+    {
+        'name': 'constant.language',
+        'pattern': /None|True|False|NotImplemented|\.\.\./g
+    },
+    {
+        'name': 'support.object',
+        'pattern': /object/g
+    },
+
+    /**
+     * built in python functions
+     *
+     * this entire list is 580 bytes minified / 379 bytes gzipped
+     *
+     * @see http://docs.python.org/library/functions.html
+     *
+     * @todo strip some out or consolidate the regexes with matching patterns?
+     */
+    {
+        'name': 'support.function.python',
+        'pattern': /\b(bs|divmod|input|open|staticmethod|all|enumerate|int|ord|str|any|eval|isinstance|pow|sum|basestring|execfile|issubclass|print|super|bin|file|iter|property|tuple|bool|filter|len|range|type|bytearray|float|list|raw_input|unichr|callable|format|locals|reduce|unicode|chr|frozenset|long|reload|vars|classmethod|getattr|map|repr|xrange|cmp|globals|max|reversed|zip|compile|hasattr|memoryview|round|__import__|complex|hash|min|set|apply|delattr|help|next|setattr|buffer|dict|hex|object|slice|coerce|dir|id|oct|sorted|intern)(?=\()/g
+    },
+    {
+        'matches': {
+            1: 'keyword'
+        },
+        'pattern': /\b(pass|lambda|with|is|not|in|from|elif|raise|del)(?=\(|\b)/g
+    },
+    {
+        'matches': {
+            1: 'storage.class',
+            2: 'entity.name.class',
+            3: 'entity.other.inherited-class'
+        },
+        'pattern': /(class)\s+(\w+)\((\w+?)\)/g
+    },
+    {
+        'matches': {
+            1: 'storage.function',
+            2: 'support.magic'
+        },
+        'pattern': /(def)\s+(__\w+)(?=\()/g
+    },
+    {
+        'name': 'support.magic',
+        'pattern': /__(name)__/g
+    },
+    {
+        'matches': {
+            1: 'keyword.control',
+            2: 'support.exception.type'
+        },
+        'pattern': /(except) (\w+):/g
+    },
+    {
+        'matches': {
+            1: 'storage.function',
+            2: 'entity.name.function'
+        },
+        'pattern': /(def)\s+(\w+)(?=\()/g
+    },
+    {
+        'name': 'entity.name.function.decorator',
+        'pattern': /@([\w\.]+)/g
+    },
+    {
+        'name': 'comment.docstring',
+        'pattern': /('{3}|"{3})[\s\S]*?\1/gm
+    }
+]);
+
+/**
+ * Ruby patterns
+ *
+ * @author Matthew King
+ * @author Jesse Farmer <jesse@20bits.com>
+ * @author actsasflinn
+ * @version 1.0.6
+ */
+
+Rainbow.extend('ruby', [
+    /**
+    * __END__ DATA
+    */
+    {
+        'matches': {
+            1: 'variable.language',
+            2: {
+              'language': null
+            }
+        },
+        //find __END__ and consume remaining text
+        'pattern': /^(__END__)\n((?:.*\n)*)/gm
+    },
+    /**
+     * Strings
+     *   1. No support for multi-line strings
+     */
+    {
+        'name': 'string',
+        'matches': {
+            1: 'string.open',
+            2: [{
+                'name': 'string.interpolation',
+                'matches': {
+                    1: 'string.open',
+                    2: {
+                      'language': 'ruby'
+                    },
+                    3: 'string.close'
+                },
+                'pattern': /(\#\{)(.*?)(\})/g
+            }],
+            3: 'string.close'
+        },
+        'pattern': /("|`)(.*?[^\\\1])?(\1)/g
+    },
+    {
+        'name': 'string',
+        'pattern': /('|"|`)([^\\\1\n]|\\.)*?\1/g
+    },
+    {
+        'name': 'string',
+        'pattern': /%[qQ](?=(\(|\[|\{|&lt;|.)(.*?)(?:'|\)|\]|\}|&gt;|\1))(?:\(\2\)|\[\2\]|\{\2\}|\&lt;\2&gt;|\1\2\1)/g
+    },
+    /**
+     * Heredocs
+     * Heredocs of the form `<<'HTML' ... HTML` are unsupported.
+     */
+    {
+        'matches': {
+            1: 'string',
+            2: 'string',
+            3: 'string'
+        },
+        'pattern': /(&lt;&lt;)(\w+).*?$([\s\S]*?^\2)/gm
+    },
+    {
+        'matches': {
+            1: 'string',
+            2: 'string',
+            3: 'string'
+        },
+        'pattern': /(&lt;&lt;\-)(\w+).*?$([\s\S]*?\2)/gm
+    },
+    /**
+     * Regular expressions
+     * Escaped delimiter (`/\//`) is unsupported.
+     */
+    {
+        'name': 'string.regexp',
+        'matches': {
+            1: 'string.regexp',
+            2: {
+                'name': 'string.regexp',
+                'pattern': /\\(.){1}/g
+            },
+            3: 'string.regexp',
+            4: 'string.regexp'
+        },
+        'pattern': /(\/)(.*?)(\/)([a-z]*)/g
+    },
+    {
+        'name': 'string.regexp',
+        'matches': {
+            1: 'string.regexp',
+            2: {
+                'name': 'string.regexp',
+                'pattern': /\\(.){1}/g
+            },
+            3: 'string.regexp',
+            4: 'string.regexp'
+        },
+        'pattern': /%r(?=(\(|\[|\{|&lt;|.)(.*?)('|\)|\]|\}|&gt;|\1))(?:\(\2\)|\[\2\]|\{\2\}|\&lt;\2&gt;|\1\2\1)([a-z]*)/g
+    },
+    /**
+     * Comments
+     */
+    {
+        'name': 'comment',
+        'pattern': /#.*$/gm
+    },
+    {
+        'name': 'comment',
+        'pattern': /^\=begin[\s\S]*?\=end$/gm
+    },
+    /**
+     * Symbols
+     */
+    {
+        'matches': {
+            1: 'constant'
+        },
+        'pattern': /(\w+:)[^:]/g
+    },
+    {
+        'matches': {
+            1: 'constant.symbol'
+        },
+        'pattern': /[^:](:(?:\w+|(?=['"](.*?)['"])(?:"\2"|'\2')))/g
+    },
+    {
+        'name': 'constant.numeric',
+        'pattern': /\b(0x[\da-f]+|\d+)\b/g
+    },
+    {
+        'name': 'support.class',
+        'pattern': /\b[A-Z]\w*(?=((\.|::)[A-Za-z]|\[))/g
+    },
+    {
+        'name': 'constant',
+        'pattern': /\b[A-Z]\w*\b/g
+    },
+    /**
+     * Keywords, variables, constants, and operators
+     *   In Ruby some keywords are valid method names, e.g., MyClass#yield
+     *   Don't mark those instances as "keywords"
+     */
+    {
+        'matches': {
+            1: 'storage.class',
+            2: 'entity.name.class',
+            3: 'entity.other.inherited-class'
+        },
+        'pattern': /\s*(class)\s+((?:(?:::)?[A-Z]\w*)+)(?:\s+&lt;\s+((?:(?:::)?[A-Z]\w*)+))?/g
+    },
+    {
+        'matches': {
+            1: 'storage.module',
+            2: 'entity.name.class'
+        },
+        'pattern': /\s*(module)\s+((?:(?:::)?[A-Z]\w*)+)/g
+    },
+    {
+        'name': 'variable.global',
+        'pattern': /\$([a-zA-Z_]\w*)\b/g
+    },
+    {
+        'name': 'variable.class',
+        'pattern': /@@([a-zA-Z_]\w*)\b/g
+    },
+    {
+        'name': 'variable.instance',
+        'pattern': /@([a-zA-Z_]\w*)\b/g
+    },
+    {
+        'matches': {
+            1: 'keyword.control'
+        },
+        'pattern': /[^\.]\b(BEGIN|begin|case|class|do|else|elsif|END|end|ensure|for|if|in|module|rescue|then|unless|until|when|while)\b(?![?!])/g
+    },
+    {
+        'matches': {
+            1: 'keyword.control.pseudo-method'
+        },
+        'pattern': /[^\.]\b(alias|alias_method|break|next|redo|retry|return|super|undef|yield)\b(?![?!])|\bdefined\?|\bblock_given\?/g
+    },
+    {
+        'matches': {
+            1: 'constant.language'
+        },
+        'pattern': /\b(nil|true|false)\b(?![?!])/g
+    },
+    {
+        'matches': {
+            1: 'variable.language'
+        },
+        'pattern': /\b(__(FILE|LINE)__|self)\b(?![?!])/g
+    },
+    {
+        'matches': {
+            1: 'keyword.special-method'
+        },
+        'pattern': /\b(require|gem|initialize|new|loop|include|extend|raise|attr_reader|attr_writer|attr_accessor|attr|catch|throw|private|module_function|public|protected)\b(?![?!])/g
+    },
+    {
+        'name': 'keyword.operator',
+        'pattern': /\s\?\s|=|&lt;&lt;|&lt;&lt;=|%=|&=|\*=|\*\*=|\+=|\-=|\^=|\|{1,2}=|&lt;&lt;|&lt;=&gt;|&lt;(?!&lt;|=)|&gt;(?!&lt;|=|&gt;)|&lt;=|&gt;=|===|==|=~|!=|!~|%|&amp;|\*\*|\*|\+|\-|\/|\||~|&gt;&gt;/g
+    },
+    {
+        'matches': {
+            1: 'keyword.operator.logical'
+        },
+        'pattern': /[^\.]\b(and|not|or)\b/g
+    },
+
+    /**
+    * Functions
+    *   1. No support for marking function parameters
+    */
+    {
+        'matches': {
+            1: 'storage.function',
+            2: 'entity.name.function'
+        },
+        'pattern': /(def)\s(.*?)(?=(\s|\())/g
+    }
+], true);
+
+/**
+ * Shell patterns
+ *
+ * @author Matthew King
+ * @author Craig Campbell
+ * @version 1.0.3
+ */
+Rainbow.extend('shell', [
+    /**
+     * This handles the case where subshells contain quotes.
+     * For example: `"$(resolve_link "$name" || true)"`.
+     *
+     * Caveat: This really should match balanced parentheses, but cannot.
+     * @see http://stackoverflow.com/questions/133601/can-regular-expressions-be-used-to-match-nested-patterns
+     */
+    {
+        'name': 'shell',
+        'matches': {
+            1: {
+                'language': 'shell'
+            }
+        },
+        'pattern': /\$\(([\s\S]*?)\)/gm
+    },
+    {
+        'matches': {
+            2: 'string'
+        },
+        'pattern': /(\(|\s|\[|\=)(('|")[\s\S]*?(\3))/gm
+    },
+    {
+        'name': 'keyword.operator',
+        'pattern': /&lt;|&gt;|&amp;/g
+    },
+    {
+        'name': 'comment',
+        'pattern': /\#[\s\S]*?$/gm
+    },
+    {
+        'name': 'storage.function',
+        'pattern': /(.+?)(?=\(\)\s{0,}\{)/g
+    },
+    /**
+     * Environment variables
+     */
+    {
+        'name': 'support.command',
+        'pattern': /\b(echo|rm|ls|(mk|rm)dir|cd|find|cp|exit|pwd|exec|trap|source|shift|unset)/g
+    },
+    {
+        'matches': {
+            1: 'keyword'
+        },
+        'pattern': /\b(break|case|continue|do|done|elif|else|esac|eval|export|fi|for|function|if|in|local|return|set|then|unset|until|while)(?=\(|\b)/g
+    }
+], true);
+
+// Rebound
+// =======
+// **Rebound** is a simple library that models Spring dynamics for the
+// purpose of driving physical animations.
+//
+// Origin
+// ------
+// [Rebound](http://facebook.github.io/rebound) was originally written
+// in Java to provide a lightweight physics system for
+// [Facebook Home](https://play.google.com/store/apps/details?id=com.facebook.home)
+// and [Chat Heads](https://play.google.com/store/apps/details?id=com.facebook.orca)
+// on Android. It's now been adopted by several other Android
+// applications. This JavaScript port was written to provide a quick
+// way to demonstrate Rebound animations on the web for a
+// [conference talk](https://www.youtube.com/watch?v=s5kNm-DgyjY). Since then the
+// JavaScript version has been used to build some really nice interfaces.
+// Check out [brandonwalkin.com](http://brandonwalkin.com) for an
+// example.
+//
+// Overview
+// --------
+// The Library provides a SpringSystem for maintaining a set of Spring
+// objects and iterating those Springs through a physics solver loop
+// until equilibrium is achieved. The Spring class is the basic
+// animation driver provided by Rebound. By attaching a listener to
+// a Spring, you can observe its motion. The observer function is
+// notified of position changes on the spring as it solves for
+// equilibrium. These position updates can be mapped to an animation
+// range to drive animated property updates on your user interface
+// elements (translation, rotation, scale, etc).
+//
+// Example
+// -------
+// Here's a simple example. Pressing and releasing on the logo below
+// will cause it to scale up and down with a springy animation.
+//
+// <div style="text-align:center; margin-bottom:50px; margin-top:50px">
+//   <img src="http://facebook.github.io/rebound/images/rebound.png" id="logo" />
+// </div>
+// <script src="../rebound.min.js"></script>
+// <script>
+//
+// function scale(el, val) {
+//   el.style.mozTransform =
+//   el.style.msTransform =
+//   el.style.webkitTransform =
+//   el.style.transform = 'scale3d(' + val + ', ' + val + ', 1)';
+// }
+// var el = document.getElementById('logo');
+//
+// var springSystem = new rebound.SpringSystem();
+// var spring = springSystem.createSpring(50, 3);
+// spring.addListener({
+//   onSpringUpdate: function(spring) {
+//     var val = spring.getCurrentValue();
+//     val = rebound.MathUtil.mapValueInRange(val, 0, 1, 1, 0.5);
+//     scale(el, val);
+//   }
+// });
+//
+// el.addEventListener('mousedown', function() {
+//   spring.setEndValue(1);
+// });
+//
+// el.addEventListener('mouseout', function() {
+//   spring.setEndValue(0);
+// });
+//
+// el.addEventListener('mouseup', function() {
+//   spring.setEndValue(0);
+// });
+//
+// </script>
+//
+// Here's how it works.
+//
+// ```
+// // Get a reference to the logo element.
+// var el = document.getElementById('logo');
+//
+// // create a SpringSystem and a Spring with a bouncy config.
+// var springSystem = new rebound.SpringSystem();
+// var spring = springSystem.createSpring(50, 3);
+//
+// // Add a listener to the spring. Every time the physics
+// // solver updates the Spring's value onSpringUpdate will
+// // be called.
+// spring.addListener({
+//   onSpringUpdate: function(spring) {
+//     var val = spring.getCurrentValue();
+//     val = rebound.MathUtil
+//                  .mapValueInRange(val, 0, 1, 1, 0.5);
+//     scale(el, val);
+//   }
+// });
+//
+// // Listen for mouse down/up/out and toggle the
+// //springs endValue from 0 to 1.
+// el.addEventListener('mousedown', function() {
+//   spring.setEndValue(1);
+// });
+//
+// el.addEventListener('mouseout', function() {
+//   spring.setEndValue(0);
+// });
+//
+// el.addEventListener('mouseup', function() {
+//   spring.setEndValue(0);
+// });
+//
+// // Helper for scaling an element with css transforms.
+// function scale(el, val) {
+//   el.style.mozTransform =
+//   el.style.msTransform =
+//   el.style.webkitTransform =
+//   el.style.transform = 'scale3d(' +
+//     val + ', ' + val + ', 1)';
+// }
+// ```
+
+(function() {
+  var rebound = {};
+  var util = rebound.util = {};
+  var concat = Array.prototype.concat;
+  var slice = Array.prototype.slice;
+
+  // Bind a function to a context object.
+  util.bind = function bind(func, context) {
+    args = slice.call(arguments, 2);
+    return function() {
+      func.apply(context, concat.call(args, slice.call(arguments)));
+    };
+  };
+
+  // Add all the properties in the source to the target.
+  util.extend = function extend(target, source) {
+    for (var key in source) {
+      if (source.hasOwnProperty(key)) {
+        target[key] = source[key];
+      }
+    }
+  };
+
+  // SpringSystem
+  // ------------
+  // **SpringSystem** is a set of Springs that all run on the same physics
+  // timing loop. To get started with a Rebound animation you first
+  // create a new SpringSystem and then add springs to it.
+  var SpringSystem = rebound.SpringSystem = function SpringSystem(looper) {
+    this._springRegistry = {};
+    this._activeSprings = [];
+    this.listeners = [];
+    this._idleSpringIndices = [];
+    this.looper = looper || new AnimationLooper();
+    this.looper.springSystem = this;
+  };
+
+  util.extend(SpringSystem.prototype, {
+
+    _springRegistry: null,
+
+    _isIdle: true,
+
+    _lastTimeMillis: -1,
+
+    _activeSprings: null,
+
+    listeners: null,
+
+    _idleSpringIndices: null,
+
+    // A SpringSystem is iterated by a looper. The looper is responsible
+    // for executing each frame as the SpringSystem is resolved to idle.
+    // There are three types of Loopers described below AnimationLooper,
+    // SimulationLooper, and SteppingSimulationLooper. AnimationLooper is
+    // the default as it is the most useful for common UI animations.
+    setLooper: function(looper) {
+      this.looper = looper
+      looper.springSystem = this;
+    },
+
+    // Create and register a new spring with the SpringSystem. This
+    // Spring will now be solved for during the physics iteration loop. By default
+    // the spring will use the default Origami spring config with 40 tension and 7
+    // friction, but you can also provide your own values here.
+    createSpring: function(tension, friction) {
+      var spring = new Spring(this);
+      this.registerSpring(spring);
+      if (typeof tension === 'undefined' || typeof friction === 'undefined') {
+        spring.setSpringConfig(SpringConfig.DEFAULT_ORIGAMI_SPRING_CONFIG);
+      } else {
+        var springConfig = SpringConfig.fromOrigamiTensionAndFriction(tension, friction);
+        spring.setSpringConfig(springConfig);
+      }
+      return spring;
+    },
+
+    // You can check if a SpringSystem is idle or active by calling
+    // getIsIdle. If all of the Springs in the SpringSystem are at rest,
+    // i.e. the physics forces have reached equilibrium, then this
+    // method will return true.
+    getIsIdle: function() {
+      return this._isIdle;
+    },
+
+    // Retrieve a specific Spring from the SpringSystem by id. This
+    // can be useful for inspecting the state of a spring before
+    // or after an integration loop in the SpringSystem executes.
+    getSpringById: function (id) {
+      return this._springRegistry[id];
+    },
+
+    // Get a listing of all the springs registered with this
+    // SpringSystem.
+    getAllSprings: function() {
+      var vals = [];
+      for (var id in this._springRegistry) {
+        if (this._springRegistry.hasOwnProperty(id)) {
+          vals.push(this._springRegistry[id]);
+        }
+      }
+      return vals;
+    },
+
+    // registerSpring is called automatically as soon as you create
+    // a Spring with SpringSystem#createSpring. This method sets the
+    // spring up in the registry so that it can be solved in the
+    // solver loop.
+    registerSpring: function(spring) {
+      this._springRegistry[spring.getId()] = spring;
+    },
+
+    // Deregister a spring with this SpringSystem. The SpringSystem will
+    // no longer consider this Spring during its integration loop once
+    // this is called. This is normally done automatically for you when
+    // you call Spring#destroy.
+    deregisterSpring: function(spring) {
+      removeFirst(this._activeSprings, spring);
+      delete this._springRegistry[spring.getId()];
+    },
+
+    advance: function(time, deltaTime) {
+      while(this._idleSpringIndices.length > 0) this._idleSpringIndices.pop();
+      for (var i = 0, len = this._activeSprings.length; i < len; i++) {
+        var spring = this._activeSprings[i];
+        if (spring.systemShouldAdvance()) {
+          spring.advance(time / 1000.0, deltaTime / 1000.0);
+        } else {
+          this._idleSpringIndices.push(this._activeSprings.indexOf(spring));
+        }
+      }
+      while(this._idleSpringIndices.length > 0) {
+        var idx = this._idleSpringIndices.pop();
+        idx >= 0 && this._activeSprings.splice(idx, 1);
+      }
+    },
+
+    // This is our main solver loop called to move the simulation
+    // forward through time. Before each pass in the solver loop
+    // onBeforeIntegrate is called on an any listeners that have
+    // registered themeselves with the SpringSystem. This gives you
+    // an opportunity to apply any constraints or adjustments to
+    // the springs that should be enforced before each iteration
+    // loop. Next the advance method is called to move each Spring in
+    // the systemShouldAdvance forward to the current time. After the
+    // integration step runs in advance, onAfterIntegrate is called
+    // on any listeners that have registered themselves with the
+    // SpringSystem. This gives you an opportunity to run any post
+    // integration constraints or adjustments on the Springs in the
+    // SpringSystem.
+    loop: function(currentTimeMillis) {
+      var listener;
+      if (this._lastTimeMillis === -1) {
+        this._lastTimeMillis = currentTimeMillis -1;
+      }
+      var ellapsedMillis = currentTimeMillis - this._lastTimeMillis;
+      this._lastTimeMillis = currentTimeMillis;
+
+      var i = 0, len = this.listeners.length;
+      for (i = 0; i < len; i++) {
+        var listener = this.listeners[i];
+        listener.onBeforeIntegrate && listener.onBeforeIntegrate(this);
+      }
+
+      this.advance(currentTimeMillis, ellapsedMillis);
+      if (this._activeSprings.length === 0) {
+        this._isIdle = true;
+        this._lastTimeMillis = -1;
+      }
+
+      for (i = 0; i < len; i++) {
+        var listener = this.listeners[i];
+        listener.onAfterIntegrate && listener.onAfterIntegrate(this);
+      }
+
+      if (!this._isIdle) {
+        this.looper.run();
+      }
+    },
+
+    // activateSpring is used to notify the SpringSystem that a Spring
+    // has become displaced. The system responds by starting its solver
+    // loop up if it is currently idle.
+    activateSpring: function(springId) {
+      var spring = this._springRegistry[springId];
+      if (this._activeSprings.indexOf(spring) == -1) {
+        this._activeSprings.push(spring);
+      }
+      if (this.getIsIdle()) {
+        this._isIdle = false;
+        this.looper.run();
+      }
+    },
+
+    // Add a listener to the SpringSystem so that you can receive
+    // before/after integration notifications allowing Springs to be
+    // constrained or adjusted.
+    addListener: function(listener) {
+      this.listeners.push(listener);
+    },
+
+    // Remove a previously added listener on the SpringSystem.
+    removeListener: function(listener) {
+      removeFirst(this.listeners, listener);
+    },
+
+    // Remove all previously added listeners on the SpringSystem.
+    removeAllListeners: function() {
+      this.listeners = [];
+    }
+
+  });
+
+  // Spring
+  // ------
+  // **Spring** provides a model of a classical spring acting to
+  // resolve a body to equilibrium. Springs have configurable
+  // tension which is a force multipler on the displacement of the
+  // spring from its rest point or `endValue` as defined by [Hooke’s
+  // law](http://en.wikipedia.org/wiki/Hooke's_law). Springs also have
+  // configurable friction, which ensures that they do not oscillate
+  // infinitely. When a Spring is displaced by updating it’s resting
+  // or `currentValue`, the SpringSystems that contain that Spring
+  // will automatically start looping to solve for equilibrium. As each
+  // timestep passes, `SpringListener` objects attached to the Spring
+  // will be notified of the updates providing a way to drive an
+  // animation off of the spring's resolution curve.
+  var Spring = rebound.Spring = function Spring(springSystem) {
+    this._id = 's' + Spring._ID++;
+    this._springSystem = springSystem;
+    this.listeners = [];
+    this._currentState = new PhysicsState();
+    this._previousState = new PhysicsState();
+    this._tempState = new PhysicsState();
+  };
+
+  util.extend(Spring, {
+    _ID: 0,
+
+    MAX_DELTA_TIME_SEC: 0.064,
+
+    SOLVER_TIMESTEP_SEC: 0.001
+
+  });
+
+  util.extend(Spring.prototype, {
+
+    _id: 0,
+
+    _springConfig: null,
+
+    _overshootClampingEnabled: false,
+
+    _currentState: null,
+
+    _previousState: null,
+
+    _tempState: null,
+
+    _startValue: 0,
+
+    _endValue: 0,
+
+    _wasAtRest: true,
+
+    _restSpeedThreshold: 0.001,
+
+    _displacementFromRestThreshold: 0.001,
+
+    listeners: null,
+
+    _timeAccumulator: 0,
+
+    _springSystem: null,
+
+    // Remove a Spring from simulation and clear its listeners.
+    destroy: function() {
+      this.listeners = [];
+      this.frames = [];
+      this._springSystem.deregisterSpring(this);
+    },
+
+    // Get the id of the spring, which can be used to retrieve it from
+    // the SpringSystems it participates in later.
+    getId: function() {
+      return this._id;
+    },
+
+    // Set the configuration values for this Spring. A SpringConfig
+    // contains the tension and friction values used to solve for the
+    // equilibrium of the Spring in the physics loop.
+    setSpringConfig: function(springConfig) {
+      this._springConfig = springConfig;
+      return this;
+    },
+
+    // Retrieve the SpringConfig used by this Spring.
+    getSpringConfig: function() {
+      return this._springConfig;
+    },
+
+    // Set the current position of this Spring. Listeners will be updated
+    // with this value immediately. If the rest or `endValue` is not
+    // updated to match this value, then the spring will be dispalced and
+    // the SpringSystem will start to loop to restore the spring to the
+    // `endValue`.
+    //
+    // A common pattern is to move a Spring around without animation by
+    // calling.
+    //
+    // ```
+    // spring.setCurrentValue(n).setAtRest();
+    // ```
+    //
+    // This moves the Spring to a new position `n`, sets the endValue
+    // to `n`, and removes any velocity from the `Spring`. By doing
+    // this you can allow the `SpringListener` to manage the position
+    // of UI elements attached to the spring even when moving without
+    // animation. For example, when dragging an element you can
+    // update the position of an attached view through a spring
+    // by calling `spring.setCurrentValue(x)`. When
+    // the gesture ends you can update the Springs
+    // velocity and endValue
+    // `spring.setVelocity(gestureEndVelocity).setEndValue(flingTarget)`
+    // to cause it to naturally animate the UI element to the resting
+    // position taking into account existing velocity. The codepaths for
+    // synchronous movement and spring driven animation can
+    // be unified using this technique.
+    setCurrentValue: function(currentValue, skipSetAtRest) {
+      this._startValue = currentValue;
+      this._currentState.position = currentValue;
+      if (!skipSetAtRest) {
+        this.setAtRest();
+      }
+      this.notifyPositionUpdated(false, false);
+      return this;
+    },
+
+    // Get the position that the most recent animation started at. This
+    // can be useful for determining the number off oscillations that
+    // have occurred.
+    getStartValue: function() {
+      return this._startValue;
+    },
+
+    // Retrieve the current value of the Spring.
+    getCurrentValue: function() {
+      return this._currentState.position;
+    },
+
+    // Get the absolute distance of the Spring from it’s resting endValue position.
+    getCurrentDisplacementDistance: function() {
+      return this.getDisplacementDistanceForState(this._currentState);
+    },
+
+    getDisplacementDistanceForState: function(state) {
+      return Math.abs(this._endValue - state.position);
+    },
+
+    // Set the endValue or resting position of the spring. If this
+    // value is different than the current value, the SpringSystem will
+    // be notified and will begin running its solver loop to resolve
+    // the Spring to equilibrium. Any listeners that are registered
+    // for onSpringEndStateChange will also be notified of this update
+    // immediately.
+    setEndValue: function(endValue) {
+      if (this._endValue == endValue && this.isAtRest())  {
+        return this;
+      }
+      this._startValue = this.getCurrentValue();
+      this._endValue = endValue;
+      this._springSystem.activateSpring(this.getId());
+      for (var i = 0, len = this.listeners.length; i < len; i++) {
+        var listener = this.listeners[i];
+        listener.onSpringEndStateChange && listener.onSpringEndStateChange(this);
+      }
+      return this;
+    },
+
+    // Retrieve the endValue or resting position of this spring.
+    getEndValue: function() {
+      return this._endValue;
+    },
+
+    // Set the current velocity of the Spring. As previously mentioned,
+    // this can be useful when you are performing a direct manipulation
+    // gesture. When a UI element is released you may call setVelocity
+    // on its animation Spring so that the Spring continues with the
+    // same velocity as the gesture ended with. The friction, tension,
+    // and displacement of the Spring will then govern its motion to
+    // return to rest on a natural feeling curve.
+    setVelocity: function(velocity) {
+      if (velocity === this._currentState.velocity) {
+        return this;
+      }
+      this._currentState.velocity = velocity;
+      this._springSystem.activateSpring(this.getId());
+      return this;
+    },
+
+    // Get the current velocity of the Spring.
+    getVelocity: function() {
+      return this._currentState.velocity;
+    },
+
+    // Set a threshold value for the movement speed of the Spring below
+    // which it will be considered to be not moving or resting.
+    setRestSpeedThreshold: function(restSpeedThreshold) {
+      this._restSpeedThreshold = restSpeedThreshold;
+      return this;
+    },
+
+    // Retrieve the rest speed threshold for this Spring.
+    getRestSpeedThreshold: function() {
+      return this._restSpeedThreshold;
+    },
+
+    // Set a threshold value for displacement below which the Spring
+    // will be considered to be not displaced i.e. at its resting
+    // `endValue`.
+    setRestDisplacementThreshold: function(displacementFromRestThreshold) {
+      this._displacementFromRestThreshold = displacementFromRestThreshold;
+    },
+
+    // Retrieve the rest displacement threshold for this spring.
+    getRestDisplacementThreshold: function() {
+      return this._displacementFromRestThreshold;
+    },
+
+    // Enable overshoot clamping. This means that the Spring will stop
+    // immediately when it reaches its resting position regardless of
+    // any existing momentum it may have. This can be useful for certain
+    // types of animations that should not oscillate such as a scale
+    // down to 0 or alpha fade.
+    setOvershootClampingEnabled: function(enabled) {
+      this._overshootClampingEnabled = enabled;
+      return this;
+    },
+
+    // Check if overshoot clamping is enabled for this spring.
+    isOvershootClampingEnabled: function() {
+      return this._overshootClampingEnabled;
+    },
+
+    // Check if the Spring has gone past its end point by comparing
+    // the direction it was moving in when it started to the current
+    // position and end value.
+    isOvershooting: function() {
+      return this._springConfig.tension > 0 &&
+             ((this._startValue < this._endValue && this.getCurrentValue() > this._endValue) ||
+             (this._startValue > this._endValue && this.getCurrentValue() < this._endValue));
+    },
+
+    // Spring.advance is the main solver method for the Spring. It takes
+    // the current time and delta since the last time step and performs
+    // an RK4 integration to get the new position and velocity state
+    // for the Spring based on the tension, friction, velocity, and
+    // displacement of the Spring.
+    advance: function(time, realDeltaTime) {
+      var isAtRest = this.isAtRest();
+
+      if (isAtRest && this._wasAtRest) {
+        return;
+      }
+
+      var adjustedDeltaTime = realDeltaTime;
+      if (realDeltaTime > Spring.MAX_DELTA_TIME_SEC) {
+        adjustedDeltaTime = Spring.MAX_DELTA_TIME_SEC;
+      }
+
+      this._timeAccumulator += adjustedDeltaTime;
+
+      var tension = this._springConfig.tension,
+          friction = this._springConfig.friction,
+
+          position = this._currentState.position,
+          velocity = this._currentState.velocity,
+          tempPosition = this._tempState.position,
+          tempVelocity = this._tempState.velocity,
+
+          aVelocity, aAcceleration,
+          bVelocity, bAcceleration,
+          cVelocity, cAcceleration,
+          dVelocity, dAcceleration,
+
+          dxdt, dvdt;
+
+      while(this._timeAccumulator >= Spring.SOLVER_TIMESTEP_SEC) {
+
+        this._timeAccumulator -= Spring.SOLVER_TIMESTEP_SEC;
+
+        if (this._timeAccumulator < Spring.SOLVER_TIMESTEP_SEC) {
+          this._previousState.position = position;
+          this._previousState.velocity = velocity;
+        }
+
+        aVelocity = velocity;
+        aAcceleration = (tension * (this._endValue - tempPosition)) - friction * velocity;
+
+        tempPosition = position + aVelocity * Spring.SOLVER_TIMESTEP_SEC * 0.5;
+        tempVelocity = velocity + aAcceleration * Spring.SOLVER_TIMESTEP_SEC * 0.5;
+        bVelocity = tempVelocity;
+        bAcceleration = (tension * (this._endValue - tempPosition)) - friction * tempVelocity;
+
+        tempPosition = position + bVelocity * Spring.SOLVER_TIMESTEP_SEC * 0.5;
+        tempVelocity = velocity + bAcceleration * Spring.SOLVER_TIMESTEP_SEC * 0.5;
+        cVelocity = tempVelocity;
+        cAcceleration = (tension * (this._endValue - tempPosition)) - friction * tempVelocity;
+
+        tempPosition = position + cVelocity * Spring.SOLVER_TIMESTEP_SEC * 0.5;
+        tempVelocity = velocity + cAcceleration * Spring.SOLVER_TIMESTEP_SEC * 0.5;
+        dVelocity = tempVelocity;
+        dAcceleration = (tension * (this._endValue - tempPosition)) - friction * tempVelocity;
+
+        dxdt = 1.0/6.0 * (aVelocity + 2.0 * (bVelocity + cVelocity) + dVelocity);
+        dvdt = 1.0/6.0 *
+          (aAcceleration + 2.0 * (bAcceleration + cAcceleration) + dAcceleration);
+
+        position += dxdt * Spring.SOLVER_TIMESTEP_SEC;
+        velocity += dvdt * Spring.SOLVER_TIMESTEP_SEC;
+      }
+
+      this._tempState.position = tempPosition;
+      this._tempState.velocity = tempVelocity;
+
+      this._currentState.position = position;
+      this._currentState.velocity = velocity;
+
+      if (this._timeAccumulator > 0) {
+        this.interpolate(this._timeAccumulator / Spring.SOLVER_TIMESTEP_SEC);
+      }
+
+      if (this.isAtRest() ||
+          this._overshootClampingEnabled && this.isOvershooting()) {
+
+        if (this._springConfig.tension > 0) {
+          this._startValue = this._endValue;
+          this._currentState.position = this._endValue;
+        } else {
+          this._endValue = this._currentState.position;
+          this._startValue = this._endValue;
+        }
+        this.setVelocity(0);
+        isAtRest = true;
+      }
+
+      var notifyActivate = false;
+      if (this._wasAtRest) {
+        this._wasAtRest = false;
+        notifyActivate = true;
+      }
+
+      var notifyAtRest = false;
+      if (isAtRest) {
+        this._wasAtRest = true;
+        notifyAtRest = true;
+      }
+
+      this.notifyPositionUpdated(notifyActivate, notifyAtRest);
+    },
+
+    notifyPositionUpdated: function(notifyActivate, notifyAtRest) {
+      for (var i = 0, len = this.listeners.length; i < len; i++) {
+        var listener = this.listeners[i];
+        if (notifyActivate && listener.onSpringActivate) {
+          listener.onSpringActivate(this);
+        }
+
+        if (listener.onSpringUpdate) {
+          listener.onSpringUpdate(this);
+        }
+
+        if (notifyAtRest && listener.onSpringAtRest) {
+          listener.onSpringAtRest(this);
+        }
+      }
+    },
+
+
+    // Check if the SpringSystem should advance. Springs are advanced
+    // a final frame after they reach equilibrium to ensure that the
+    // currentValue is exactly the requested endValue regardless of the
+    // displacement threshold.
+    systemShouldAdvance: function() {
+      return !this.isAtRest() || !this.wasAtRest();
+    },
+
+    wasAtRest: function() {
+      return this._wasAtRest;
+    },
+
+    // Check if the Spring is atRest meaning that it’s currentValue and
+    // endValue are the same and that it has no velocity. The previously
+    // described thresholds for speed and displacement define the bounds
+    // of this equivalence check. If the Spring has 0 tension, then it will
+    // be considered at rest whenever its absolute velocity drops below the
+    // restSpeedThreshold.
+    isAtRest: function() {
+      return Math.abs(this._currentState.velocity) < this._restSpeedThreshold &&
+        (this.getDisplacementDistanceForState(this._currentState) <= this._displacementFromRestThreshold ||
+        this._springConfig.tension === 0);
+    },
+
+    // Force the spring to be at rest at its current position. As
+    // described in the documentation for setCurrentValue, this method
+    // makes it easy to do synchronous non-animated updates to ui
+    // elements that are attached to springs via SpringListeners.
+    setAtRest: function() {
+      this._endValue = this._currentState.position;
+      this._tempState.position = this._currentState.position;
+      this._currentState.velocity = 0;
+      return this;
+    },
+
+    interpolate: function(alpha) {
+      this._currentState.position = this._currentState.position *
+        alpha + this._previousState.position * (1 - alpha);
+      this._currentState.velocity = this._currentState.velocity *
+        alpha + this._previousState.velocity * (1 - alpha);
+    },
+
+    getListeners: function() {
+      return this.listeners;
+    },
+
+    addListener: function(newListener) {
+      this.listeners.push(newListener);
+      return this;
+    },
+
+    removeListener: function(listenerToRemove) {
+      removeFirst(this.listeners, listenerToRemove);
+      return this;
+    },
+
+    removeAllListeners: function() {
+      this.listeners = [];
+      return this;
+    },
+
+    currentValueIsApproximately: function(value) {
+      return Math.abs(this.getCurrentValue() - value) <=
+        this.getRestDisplacementThreshold();
+    }
+
+  });
+
+  // PhysicsState
+  // ------------
+  // **PhysicsState** consists of a position and velocity. A Spring uses
+  // this internally to keep track of its current and prior position and
+  // velocity values.
+  var PhysicsState = function PhysicsState() {};
+
+  util.extend(PhysicsState.prototype, {
+    position: 0,
+    velocity: 0
+  });
+
+  // SpringConfig
+  // ------------
+  // **SpringConfig** maintains a set of tension and friction constants
+  // for a Spring. You can use fromOrigamiTensionAndFriction to convert
+  // values from the [Origami](http://facebook.github.io/origami/)
+  // design tool directly to Rebound spring constants.
+  var SpringConfig = rebound.SpringConfig =
+    function SpringConfig(tension, friction) {
+      this.tension = tension;
+      this.friction = friction;
+    };
+
+  // Loopers
+  // -------
+  // **AnimationLooper** plays each frame of the SpringSystem on animation timing loop.
+  // This is the default type of looper for a new spring system as it is the most common
+  // when developing UI.
+  var AnimationLooper = rebound.AnimationLooper = function AnimationLooper() {
+    this.springSystem = null;
+    var _this = this;
+    var _run = function() {
+      _this.springSystem.loop(Date.now());
+    };
+
+    this.run = function() {
+      util.onFrame(_run);
+    }
+  };
+
+  // **SimulationLooper** resolves the SpringSystem to a resting state in a
+  // tight and blocking loop. This is useful for synchronously generating pre-recorded
+  // animations that can then be played on a timing loop later. Sometimes this lead to
+  // better performance to pre-record a single spring curve and use it to drive many
+  // animations; however, it can make dynamic response to user input a bit trickier to
+  // implement.
+  var SimulationLooper = rebound.SimulationLooper = function SimulationLooper(timestep) {
+    this.springSystem = null;
+    var time = 0;
+    var running = false;
+    timestep=timestep || 16.667;
+
+    this.run = function() {
+      if (running) {
+        return;
+      }
+      running = true;
+      while(!this.springSystem.getIsIdle()) {
+        this.springSystem.loop(time+=timestep);
+      }
+      running = false;
+    }
+  };
+
+  // **SteppingSimulationLooper** resolves the SpringSystem one step at a time controlled
+  // by an outside loop. This is useful for testing and verifying the behavior of a SpringSystem
+  // or if you want to control your own timing loop for some reason e.g. slowing down or speeding
+  // up the simulation.
+  var SteppingSimulationLooper = rebound.SteppingSimulationLooper = function(timestep) {
+    this.springSystem = null;
+    var time = 0;
+    var running = false;
+
+    // this.run is NOOP'd here to allow control from the outside using this.step.
+    this.run = function(){};
+
+    // Perform one step toward resolving the SpringSystem.
+    this.step = function(timestep) {
+      this.springSystem.loop(time+=timestep);
+    }
+  };
+
+  // Math for converting from
+  // [Origami](http://facebook.github.io/origami/) to
+  // [Rebound](http://facebook.github.io/rebound).
+  // You mostly don't need to worry about this, just use
+  // SpringConfig.fromOrigamiTensionAndFriction(v, v);
+  var OrigamiValueConverter = rebound.OrigamiValueConverter = {
+    tensionFromOrigamiValue: function(oValue) {
+      return (oValue - 30.0) * 3.62 + 194.0;
+    },
+
+    origamiValueFromTension: function(tension) {
+      return (tension - 194.0) / 3.62 + 30.0;
+    },
+
+    frictionFromOrigamiValue: function(oValue) {
+      return (oValue - 8.0) * 3.0 + 25.0;
+    },
+
+    origamiFromFriction: function(friction) {
+      return (friction - 25.0) / 3.0 + 8.0;
+    }
+  };
+
+  util.extend(SpringConfig, {
+    // Convert an origami Spring tension and friction to Rebound spring
+    // constants. If you are prototyping a design with Origami, this
+    // makes it easy to make your springs behave exactly the same in
+    // Rebound.
+    fromOrigamiTensionAndFriction: function(tension, friction) {
+      return new SpringConfig(
+        OrigamiValueConverter.tensionFromOrigamiValue(tension),
+        OrigamiValueConverter.frictionFromOrigamiValue(friction));
+    },
+
+    // Create a SpringConfig with no tension or a coasting spring with some amount
+    // of Friction so that it does not coast infininitely.
+    coastingConfigWithOrigamiFriction: function(friction) {
+      return new SpringConfig(0, OrigamiValueConverter.frictionFromOrigamiValue(friction));
+    }
+  });
+
+  SpringConfig.DEFAULT_ORIGAMI_SPRING_CONFIG = SpringConfig.fromOrigamiTensionAndFriction(40, 7);
+
+  util.extend(SpringConfig.prototype, {friction: 0, tension: 0});
+
+  // Here are a couple of function to convert colors between hex codes and RGB
+  // component values. These are handy when performing color tweening animations.
+  var colorCache = {};
+  util.hexToRGB = function(color) {
+    if (colorCache[color]) {
+      return colorCache[color];
+    }
+    color = color.replace('#', '');
+    if (color.length === 3) {
+      color = color[0] + color[0] + color[1] + color[1] + color[2] + color[2];
+    }
+    var parts = color.match(/.{2}/g);
+
+    var color = {
+      r: parseInt(parts[0], 16),
+      g: parseInt(parts[1], 16),
+      b: parseInt(parts[2], 16)
+    };
+
+    colorCache[color] = color;
+    return color;
+  };
+
+  util.rgbToHex = function(r, g, b) {
+    r = r.toString(16);
+    g = g.toString(16);
+    b = b.toString(16);
+    r = r.length < 2 ? '0' + r : r;
+    g = g.length < 2 ? '0' + g : g;
+    b = b.length < 2 ? '0' + b : b;
+    return '#' + r + g + b;
+  };
+
+  var MathUtil = rebound.MathUtil = {
+    // This helper function does a linear interpolation of a value from
+    // one range to another. This can be very useful for converting the
+    // motion of a Spring to a range of UI property values. For example a
+    // spring moving from position 0 to 1 could be interpolated to move a
+    // view from pixel 300 to 350 and scale it from 0.5 to 1. The current
+    // position of the `Spring` just needs to be run through this method
+    // taking its input range in the _from_ parameters with the property
+    // animation range in the _to_ parameters.
+    mapValueInRange: function(value, fromLow, fromHigh, toLow, toHigh) {
+      fromRangeSize = fromHigh - fromLow;
+      toRangeSize = toHigh - toLow;
+      valueScale = (value - fromLow) / fromRangeSize;
+      return toLow + (valueScale * toRangeSize);
+    },
+
+    // Interpolate two hex colors in a 0 - 1 range or optionally provide a custom range
+    // with fromLow,fromHight. The output will be in hex by default unless asRGB is true
+    // in which case it will be returned as an rgb string.
+    interpolateColor: function(val, startColor, endColor, fromLow, fromHigh, asRGB) {
+      fromLow = typeof fromLow === 'undefined' ? 0 : fromLow;
+      fromHigh = typeof fromHigh === 'undefined' ? 1 : fromHigh;
+      var startColor = util.hexToRGB(startColor);
+      var endColor = util.hexToRGB(endColor);
+      var r = Math.floor(util.mapValueInRange(val, fromLow, fromHigh, startColor.r, endColor.r));
+      var g = Math.floor(util.mapValueInRange(val, fromLow, fromHigh, startColor.g, endColor.g));
+      var b = Math.floor(util.mapValueInRange(val, fromLow, fromHigh, startColor.b, endColor.b));
+      if (asRGB) {
+        return 'rgb(' + r + ',' + g + ',' + b + ')';
+      } else {
+        return util.rgbToHex(r, g, b);
+      }
+    },
+
+    degreesToRadians: function(deg) {
+      return (deg * Math.PI) / 180;
+    },
+
+    radiansToDegrees: function(rad) {
+      return (rad * 180) / Math.PI;
+    }
+
+  }
+
+  util.extend(util, MathUtil);
+
+
+  // Utilities
+  // ---------
+  // Here are a few useful JavaScript utilities.
+
+  // Lop off the first occurence of the reference in the Array.
+  function removeFirst(array, item) {
+    var idx = array.indexOf(item);
+    idx != -1 && array.splice(idx, 1);
+  }
+
+  // Cross browser/node timer functions.
+  util.onFrame = function onFrame(func) {
+    var meth;
+    if (typeof process != 'undefined' && process.title !== 'browser') {
+      meth = setImmediate;
+    } else {
+      meth = window.requestAnimationFrame ||
+        window.webkitRequestAnimationFrame ||
+        window.mozRequestAnimationFrame ||
+        window.msRequestAnimationFrame ||
+        window.oRequestAnimationFrame;
+    }
+    return meth(func);
+  }
+
+  // Export the public api using exports for common js or the window for
+  // normal browser inclusion.
+  if (typeof exports != 'undefined') {
+    util.extend(exports, rebound);
+  } else if (typeof window != 'undefined') {
+    window.rebound = rebound;
+  }
+})();
+
+// Legal Stuff
+// -----------
+/**
+ *  Copyright (c) 2013, Facebook, Inc.
+ *  All rights reserved.
+ *
+ *  This source code is licensed under the BSD-style license found in the
+ *  LICENSE file in the root directory of this source tree. An additional grant
+ *  of patent rights can be found in the PATENTS file in the same directory.
+ */
+
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /** @jsx React.DOM */
 
@@ -19625,7 +22426,7 @@ var Menu = React.createClass({displayName: 'Menu',
         this.replaceState({ width: window.innerWidth,
             height:window.innerHeight,searchVisible:this.state.searchVisible,
             sliderVisible:this.state.sliderVisible});
-
+            $("#disqus_thread").css("width",window.innerWidth+"px")
             if(window.innerWidth>=768){
                 if(this.state.searchVisible){
                     this.toggleSearchClick();
@@ -19926,7 +22727,7 @@ var Menu = React.createClass({displayName: 'Menu',
             React.DOM.div({style: divStyle, id: "menu"}, 
                 React.DOM.ul({style: ulStyle}, 
                     React.DOM.li({style: liStyle, className: "hidden-lg"}, 
-                        React.DOM.div({onClick: this.toggleNavClick, style: inFront, className: "Layout-hamburger fa fa-bars"})
+                        React.DOM.div({onClick: this.toggleNavClick, style: inFront, id: "hamburgerButton", className: "Layout-hamburger"})
                     ), 
                     React.DOM.li({style: liFontStyle}, 
                         React.DOM.div({onClick: this.toggleNavClick, style: inFront}, "Robbestad.com")
@@ -20187,9 +22988,9 @@ var React = require('react'),
             this.setInterval(this.tick, 1000); // Call a method on the mixin
             var spinner=$(".spinner");
             if($("body").width()<=768){
-                spinner.css("left",Math.floor($("body").width()/2)+"px");
+                spinner.css("left",Math.floor($("body").width()/2)-10+"px");
             } else {
-            spinner.css("left",Math.floor($("body").width()/2)+Math.floor($("#quiz").width()/4)+"px");
+            spinner.css("left",Math.floor($("body").width()/2)+Math.floor($("#quiz").width()/4)-10+"px");
             }
             spinner.css("zIndex",0);
         },
@@ -20367,7 +23168,7 @@ module.exports = Quiz;
 
 },{"react":151}],158:[function(require,module,exports){
 module.exports=require(152)
-},{"/Users/svenanders/Jottacloud/dev/react-fullscreen/src/jsx/components/Search.jsx":152,"react":151}],159:[function(require,module,exports){
+},{"/Users/svenanders/Jottacloud/dev/react-blog/src/jsx/components/Search.jsx":152,"react":151}],159:[function(require,module,exports){
 /** @jsx React.DOM */
 
 'use strict';
@@ -20444,1844 +23245,233 @@ function loaded() {
 }
 
 
-//WebFontConfig = {
-//    google: {
-//        families: ['Lobster','Open Sans']
-//    }
-//};
-//
-////text: 'Robestad.com'
-//
-//(function() {
-//    var wf = document.createElement('script');
-//    wf.src = ('https:' == document.location.protocol ? 'https' : 'http') +
-//    '://ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js';
-//    wf.type = 'text/javascript';
-//    wf.async = 'true';
-//    var s = document.getElementsByTagName('script')[0];
-//    s.parentNode.insertBefore(wf, s);
-//})();
-//
-//var displayBlogId=function(){
-//    var hash = window.location.hash;
-//    document.getElementById(hash).style;
-//    //$("."+hash).css("display","block");
-//}
-//
-
-
-/*
- var blogData=[];
- (function(){
- $.ajax({
- url: "http://api.robbestad.com/robbestad",
- crossDomain:true,
- dataType: "json",
- }).then(function (data) {
- $.each(data, function(i, item) {
- if("object" === typeof item["robbestad"] ){
- blogData.push(item["robbestad"]);
- }
- }
-
- }, function (error) {
- });
- });
-
- */
-//$.getJSON( "http://api.robbestad.com/robbestad", function( data ) {
-//var items = [];
-//$.each( data, function( key, val ) {
-//  if("object" === typeof val["robbestad"] ){
-//    for(var i=0; i < val["robbestad"].length; i++)
-//      items.push( "<div id='" + key + "'>" + val["robbestad"][i].title + "<br/>" + val["robbestad"][i].content + "</div>" );
-//  }
-//});
-//$( "<ul/>", {
-//"class": "my-new-list",
-//html: items.join( "" )
-//}).appendTo( "#blogdata" );
-//});
-
-
-
-/**
- * Copyright 2013 Craig Campbell
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * Rainbow is a simple code syntax highlighter
- *
- * @preserve @version 1.2
- * @url rainbowco.de
- */
-window['Rainbow'] = (function() {
-
-    /**
-     * array of replacements to process at the end
-     *
-     * @type {Object}
-     */
-    var replacements = {},
-
-        /**
-         * an array of start and end positions of blocks to be replaced
-         *
-         * @type {Object}
-         */
-        replacement_positions = {},
-
-        /**
-         * an array of the language patterns specified for each language
-         *
-         * @type {Object}
-         */
-        language_patterns = {},
-
-        /**
-         * an array of languages and whether they should bypass the default patterns
-         *
-         * @type {Object}
-         */
-        bypass_defaults = {},
-
-        /**
-         * processing level
-         *
-         * replacements are stored at this level so if there is a sub block of code
-         * (for example php inside of html) it runs at a different level
-         *
-         * @type {number}
-         */
-        CURRENT_LEVEL = 0,
-
-        /**
-         * constant used to refer to the default language
-         *
-         * @type {number}
-         */
-        DEFAULT_LANGUAGE = 0,
-
-        /**
-         * used as counters so we can selectively call setTimeout
-         * after processing a certain number of matches/replacements
-         *
-         * @type {number}
-         */
-        match_counter = 0,
-
-        /**
-         * @type {number}
-         */
-        replacement_counter = 0,
-
-        /**
-         * @type {null|string}
-         */
-        global_class,
-
-        /**
-         * @type {null|Function}
-         */
-        onHighlight;
-
-    /**
-     * adds a class to a given code block
-     *
-     * @param {Element} el
-     * @param {string} class_name   class name to add
-     * @returns void
-     */
-    function _addClass(el, class_name) {
-        el.className += el.className ? ' ' + class_name : class_name;
-    }
-
-    /**
-     * checks if a block has a given class
-     *
-     * @param {Element} el
-     * @param {string} class_name   class name to check for
-     * @returns {boolean}
-     */
-    function _hasClass(el, class_name) {
-        return (' ' + el.className + ' ').indexOf(' ' + class_name + ' ') > -1;
-    }
-
-    /**
-     * gets the language for this block of code
-     *
-     * @param {Element} block
-     * @returns {string|null}
-     */
-    function _getLanguageForBlock(block) {
-
-        // if this doesn't have a language but the parent does then use that
-        // this means if for example you have: <pre data-language="php">
-        // with a bunch of <code> blocks inside then you do not have
-        // to specify the language for each block
-        var language = block.getAttribute('data-language') || block.parentNode.getAttribute('data-language');
-
-        // this adds support for specifying language via a css class
-        // you can use the Google Code Prettify style: <pre class="lang-php">
-        // or the HTML5 style: <pre><code class="language-php">
-        if (!language) {
-            var pattern = /\blang(?:uage)?-(\w+)/,
-                match = block.className.match(pattern) || block.parentNode.className.match(pattern);
-
-            if (match) {
-                language = match[1];
-            }
-        }
-
-        return language;
-    }
-
-    /**
-     * makes sure html entities are always used for tags
-     *
-     * @param {string} code
-     * @returns {string}
-     */
-    function _htmlEntities(code) {
-        return code.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/&(?![\w\#]+;)/g, '&amp;');
-    }
-
-    /**
-     * determines if a new match intersects with an existing one
-     *
-     * @param {number} start1    start position of existing match
-     * @param {number} end1      end position of existing match
-     * @param {number} start2    start position of new match
-     * @param {number} end2      end position of new match
-     * @returns {boolean}
-     */
-    function _intersects(start1, end1, start2, end2) {
-        if (start2 >= start1 && start2 < end1) {
-            return true;
-        }
-
-        return end2 > start1 && end2 < end1;
-    }
-
-    /**
-     * determines if two different matches have complete overlap with each other
-     *
-     * @param {number} start1   start position of existing match
-     * @param {number} end1     end position of existing match
-     * @param {number} start2   start position of new match
-     * @param {number} end2     end position of new match
-     * @returns {boolean}
-     */
-    function _hasCompleteOverlap(start1, end1, start2, end2) {
-
-        // if the starting and end positions are exactly the same
-        // then the first one should stay and this one should be ignored
-        if (start2 == start1 && end2 == end1) {
-            return false;
-        }
-
-        return start2 <= start1 && end2 >= end1;
-    }
-
-    /**
-     * determines if the match passed in falls inside of an existing match
-     * this prevents a regex pattern from matching inside of a bigger pattern
-     *
-     * @param {number} start - start position of new match
-     * @param {number} end - end position of new match
-     * @returns {boolean}
-     */
-    function _matchIsInsideOtherMatch(start, end) {
-        for (var key in replacement_positions[CURRENT_LEVEL]) {
-            key = parseInt(key, 10);
-
-            // if this block completely overlaps with another block
-            // then we should remove the other block and return false
-            if (_hasCompleteOverlap(key, replacement_positions[CURRENT_LEVEL][key], start, end)) {
-                delete replacement_positions[CURRENT_LEVEL][key];
-                delete replacements[CURRENT_LEVEL][key];
-            }
-
-            if (_intersects(key, replacement_positions[CURRENT_LEVEL][key], start, end)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * takes a string of code and wraps it in a span tag based on the name
-     *
-     * @param {string} name     name of the pattern (ie keyword.regex)
-     * @param {string} code     block of code to wrap
-     * @returns {string}
-     */
-    function _wrapCodeInSpan(name, code) {
-        return '<span class="' + name.replace(/\./g, ' ') + (global_class ? ' ' + global_class : '') + '">' + code + '</span>';
-    }
-
-    /**
-     * finds out the position of group match for a regular expression
-     *
-     * @see http://stackoverflow.com/questions/1985594/how-to-find-index-of-groups-in-match
-     *
-     * @param {Object} match
-     * @param {number} group_number
-     * @returns {number}
-     */
-    function _indexOfGroup(match, group_number) {
-        var index = 0,
-            i;
-
-        for (i = 1; i < group_number; ++i) {
-            if (match[i]) {
-                index += match[i].length;
-            }
-        }
-
-        return index;
-    }
-
-    /**
-     * matches a regex pattern against a block of code
-     * finds all matches that should be processed and stores the positions
-     * of where they should be replaced within the string
-     *
-     * this is where pretty much all the work is done but it should not
-     * be called directly
-     *
-     * @param {RegExp} pattern
-     * @param {string} code
-     * @returns void
-     */
-    function _processPattern(regex, pattern, code, callback)
-    {
-        if (typeof regex === "undefined" || regex === null) {
-            //console.warn("undefined regular expression")
-            return callback();
-        }
-        var match = regex.exec(code);
-
-        if (!match) {
-            return callback();
-        }
-
-        ++match_counter;
-
-        // treat match 0 the same way as name
-        if (!pattern['name'] && typeof pattern['matches'][0] == 'string') {
-            pattern['name'] = pattern['matches'][0];
-            delete pattern['matches'][0];
-        }
-
-        var replacement = match[0],
-            start_pos = match.index,
-            end_pos = match[0].length + start_pos,
-
-            /**
-             * callback to process the next match of this pattern
-             */
-            processNext = function() {
-                var nextCall = function() {
-                    _processPattern(regex, pattern, code, callback);
-                };
-
-                // every 100 items we process let's call set timeout
-                // to let the ui breathe a little
-                return match_counter % 100 > 0 ? nextCall() : setTimeout(nextCall, 0);
-            };
-
-        // if this is not a child match and it falls inside of another
-        // match that already happened we should skip it and continue processing
-        if (_matchIsInsideOtherMatch(start_pos, end_pos)) {
-            return processNext();
-        }
-
-        /**
-         * callback for when a match was successfully processed
-         *
-         * @param {string} replacement
-         * @returns void
-         */
-        var onMatchSuccess = function(replacement) {
-                // if this match has a name then wrap it in a span tag
-                if (pattern['name']) {
-                    replacement = _wrapCodeInSpan(pattern['name'], replacement);
-                }
-
-                // console.log('LEVEL', CURRENT_LEVEL, 'replace', match[0], 'with', replacement, 'at position', start_pos, 'to', end_pos);
-
-                // store what needs to be replaced with what at this position
-                if (!replacements[CURRENT_LEVEL]) {
-                    replacements[CURRENT_LEVEL] = {};
-                    replacement_positions[CURRENT_LEVEL] = {};
-                }
-
-                replacements[CURRENT_LEVEL][start_pos] = {
-                    'replace': match[0],
-                    'with': replacement
-                };
-
-                // store the range of this match so we can use it for comparisons
-                // with other matches later
-                replacement_positions[CURRENT_LEVEL][start_pos] = end_pos;
-
-                // process the next match
-                processNext();
-            },
-
-            // if this pattern has sub matches for different groups in the regex
-            // then we should process them one at a time by rerunning them through
-            // this function to generate the new replacement
-            //
-            // we run through them backwards because the match position of earlier
-            // matches will not change depending on what gets replaced in later
-            // matches
-            group_keys = keys(pattern['matches']),
-
-            /**
-             * callback for processing a sub group
-             *
-             * @param {number} i
-             * @param {Array} group_keys
-             * @param {Function} callback
-             */
-            processGroup = function(i, group_keys, callback) {
-                if (i >= group_keys.length) {
-                    return callback(replacement);
-                }
-
-                var processNextGroup = function() {
-                        processGroup(++i, group_keys, callback);
-                    },
-                    block = match[group_keys[i]];
-
-                // if there is no match here then move on
-                if (!block) {
-                    return processNextGroup();
-                }
-
-                var group = pattern['matches'][group_keys[i]],
-                    language = group['language'],
-
-                    /**
-                     * process group is what group we should use to actually process
-                     * this match group
-                     *
-                     * for example if the subgroup pattern looks like this
-                     * 2: {
-                     *     'name': 'keyword',
-                     *     'pattern': /true/g
-                     * }
-                     *
-                     * then we use that as is, but if it looks like this
-                     *
-                     * 2: {
-                     *     'name': 'keyword',
-                     *     'matches': {
-                     *          'name': 'special',
-                     *          'pattern': /whatever/g
-                     *      }
-                     * }
-                     *
-                     * we treat the 'matches' part as the pattern and keep
-                     * the name around to wrap it with later
-                     */
-                    process_group = group['name'] && group['matches'] ? group['matches'] : group,
-
-                    /**
-                     * takes the code block matched at this group, replaces it
-                     * with the highlighted block, and optionally wraps it with
-                     * a span with a name
-                     *
-                     * @param {string} block
-                     * @param {string} replace_block
-                     * @param {string|null} match_name
-                     */
-                    _replaceAndContinue = function(block, replace_block, match_name) {
-                        replacement = _replaceAtPosition(_indexOfGroup(match, group_keys[i]), block, match_name ? _wrapCodeInSpan(match_name, replace_block) : replace_block, replacement);
-                        processNextGroup();
-                    };
-
-                // if this is a sublanguage go and process the block using that language
-                if (language) {
-                    return _highlightBlockForLanguage(block, language, function(code) {
-                        _replaceAndContinue(block, code);
-                    });
-                }
-
-                // if this is a string then this match is directly mapped to selector
-                // so all we have to do is wrap it in a span and continue
-                if (typeof group === 'string') {
-                    return _replaceAndContinue(block, block, group);
-                }
-
-                // the process group can be a single pattern or an array of patterns
-                // _processCodeWithPatterns always expects an array so we convert it here
-                _processCodeWithPatterns(block, process_group.length ? process_group : [process_group], function(code) {
-                    _replaceAndContinue(block, code, group['matches'] ? group['name'] : 0);
-                });
-            };
-
-        processGroup(0, group_keys, onMatchSuccess);
-    }
-
-    /**
-     * should a language bypass the default patterns?
-     *
-     * if you call Rainbow.extend() and pass true as the third argument
-     * it will bypass the defaults
-     */
-    function _bypassDefaultPatterns(language)
-    {
-        return bypass_defaults[language];
-    }
-
-    /**
-     * returns a list of regex patterns for this language
-     *
-     * @param {string} language
-     * @returns {Array}
-     */
-    function _getPatternsForLanguage(language) {
-        var patterns = language_patterns[language] || [],
-            default_patterns = language_patterns[DEFAULT_LANGUAGE] || [];
-
-        return _bypassDefaultPatterns(language) ? patterns : patterns.concat(default_patterns);
-    }
-
-    /**
-     * substring replace call to replace part of a string at a certain position
-     *
-     * @param {number} position         the position where the replacement should happen
-     * @param {string} replace          the text we want to replace
-     * @param {string} replace_with     the text we want to replace it with
-     * @param {string} code             the code we are doing the replacing in
-     * @returns {string}
-     */
-    function _replaceAtPosition(position, replace, replace_with, code) {
-        var sub_string = code.substr(position);
-        return code.substr(0, position) + sub_string.replace(replace, replace_with);
-    }
-
-   /**
-     * sorts an object by index descending
-     *
-     * @param {Object} object
-     * @return {Array}
-     */
-    function keys(object) {
-        var locations = [],
-            replacement,
-            pos;
-
-        for(var location in object) {
-            if (object.hasOwnProperty(location)) {
-                locations.push(location);
-            }
-        }
-
-        // numeric descending
-        return locations.sort(function(a, b) {
-            return b - a;
-        });
-    }
-
-    /**
-     * processes a block of code using specified patterns
-     *
-     * @param {string} code
-     * @param {Array} patterns
-     * @returns void
-     */
-    function _processCodeWithPatterns(code, patterns, callback)
-    {
-        // we have to increase the level here so that the
-        // replacements will not conflict with each other when
-        // processing sub blocks of code
-        ++CURRENT_LEVEL;
-
-        // patterns are processed one at a time through this function
-        function _workOnPatterns(patterns, i)
-        {
-            // still have patterns to process, keep going
-            if (i < patterns.length) {
-                return _processPattern(patterns[i]['pattern'], patterns[i], code, function() {
-                    _workOnPatterns(patterns, ++i);
-                });
-            }
-
-            // we are done processing the patterns
-            // process the replacements and update the DOM
-            _processReplacements(code, function(code) {
-
-                // when we are done processing replacements
-                // we are done at this level so we can go back down
-                delete replacements[CURRENT_LEVEL];
-                delete replacement_positions[CURRENT_LEVEL];
-                --CURRENT_LEVEL;
-                callback(code);
-            });
-        }
-
-        _workOnPatterns(patterns, 0);
-    }
-
-    /**
-     * process replacements in the string of code to actually update the markup
-     *
-     * @param {string} code         the code to process replacements in
-     * @param {Function} onComplete   what to do when we are done processing
-     * @returns void
-     */
-    function _processReplacements(code, onComplete) {
-
-        /**
-         * processes a single replacement
-         *
-         * @param {string} code
-         * @param {Array} positions
-         * @param {number} i
-         * @param {Function} onComplete
-         * @returns void
-         */
-        function _processReplacement(code, positions, i, onComplete) {
-            if (i < positions.length) {
-                ++replacement_counter;
-                var pos = positions[i],
-                    replacement = replacements[CURRENT_LEVEL][pos];
-                code = _replaceAtPosition(pos, replacement['replace'], replacement['with'], code);
-
-                // process next function
-                var next = function() {
-                    _processReplacement(code, positions, ++i, onComplete);
-                };
-
-                // use a timeout every 250 to not freeze up the UI
-                return replacement_counter % 250 > 0 ? next() : setTimeout(next, 0);
-            }
-
-            onComplete(code);
-        }
-
-        var string_positions = keys(replacements[CURRENT_LEVEL]);
-        _processReplacement(code, string_positions, 0, onComplete);
-    }
-
-    /**
-     * takes a string of code and highlights it according to the language specified
-     *
-     * @param {string} code
-     * @param {string} language
-     * @param {Function} onComplete
-     * @returns void
-     */
-    function _highlightBlockForLanguage(code, language, onComplete) {
-        var patterns = _getPatternsForLanguage(language);
-        _processCodeWithPatterns(_htmlEntities(code), patterns, onComplete);
-    }
-
-    /**
-     * highlight an individual code block
-     *
-     * @param {Array} code_blocks
-     * @param {number} i
-     * @returns void
-     */
-    function _highlightCodeBlock(code_blocks, i, onComplete) {
-        if (i < code_blocks.length) {
-            var block = code_blocks[i],
-                language = _getLanguageForBlock(block);
-
-            if (!_hasClass(block, 'rainbow') && language) {
-                language = language.toLowerCase();
-
-                _addClass(block, 'rainbow');
-
-                return _highlightBlockForLanguage(block.innerHTML, language, function(code) {
-                    block.innerHTML = code;
-
-                    // reset the replacement arrays
-                    replacements = {};
-                    replacement_positions = {};
-
-                    // if you have a listener attached tell it that this block is now highlighted
-                    if (onHighlight) {
-                        onHighlight(block, language);
-                    }
-
-                    // process the next block
-                    setTimeout(function() {
-                        _highlightCodeBlock(code_blocks, ++i, onComplete);
-                    }, 0);
-                });
-            }
-            return _highlightCodeBlock(code_blocks, ++i, onComplete);
-        }
-
-        if (onComplete) {
-            onComplete();
-        }
-    }
-
-    /**
-     * start highlighting all the code blocks
-     *
-     * @returns void
-     */
-    function _highlight(node, onComplete) {
-
-        // the first argument can be an Event or a DOM Element
-        // I was originally checking instanceof Event but that makes it break
-        // when using mootools
-        //
-        // @see https://github.com/ccampbell/rainbow/issues/32
-        //
-        node = node && typeof node.getElementsByTagName == 'function' ? node : document;
-
-        var pre_blocks = node.getElementsByTagName('pre'),
-            code_blocks = node.getElementsByTagName('code'),
-            i,
-            final_pre_blocks = [],
-            final_code_blocks = [];
-
-        // first loop through all pre blocks to find which ones to highlight
-        // also strip whitespace
-        for (i = 0; i < pre_blocks.length; ++i) {
-
-            // strip whitespace around code tags when they are inside of a pre tag
-            // this makes the themes look better because you can't accidentally
-            // add extra linebreaks at the start and end
-            //
-            // when the pre tag contains a code tag then strip any extra whitespace
-            // for example
-            // <pre>
-            //      <code>var foo = true;</code>
-            // </pre>
-            //
-            // will become
-            // <pre><code>var foo = true;</code></pre>
-            //
-            // if you want to preserve whitespace you can use a pre tag on its own
-            // without a code tag inside of it
-            if (pre_blocks[i].getElementsByTagName('code').length) {
-                pre_blocks[i].innerHTML = pre_blocks[i].innerHTML.replace(/^\s+/, '').replace(/\s+$/, '');
-                continue;
-            }
-
-            // if the pre block has no code blocks then we are going to want to
-            // process it directly
-            final_pre_blocks.push(pre_blocks[i]);
-        }
-
-        // @see http://stackoverflow.com/questions/2735067/how-to-convert-a-dom-node-list-to-an-array-in-javascript
-        // we are going to process all <code> blocks
-        for (i = 0; i < code_blocks.length; ++i) {
-            final_code_blocks.push(code_blocks[i]);
-        }
-
-        _highlightCodeBlock(final_code_blocks.concat(final_pre_blocks), 0, onComplete);
-    }
-
-    /**
-     * public methods
-     */
-    return {
-
-        /**
-         * extends the language pattern matches
-         *
-         * @param {*} language     name of language
-         * @param {*} patterns      array of patterns to add on
-         * @param {boolean|null} bypass      if true this will bypass the default language patterns
-         */
-        extend: function(language, patterns, bypass) {
-
-            // if there is only one argument then we assume that we want to
-            // extend the default language rules
-            if (arguments.length == 1) {
-                patterns = language;
-                language = DEFAULT_LANGUAGE;
-            }
-
-            bypass_defaults[language] = bypass;
-            language_patterns[language] = patterns.concat(language_patterns[language] || []);
-        },
-
-        /**
-         * call back to let you do stuff in your app after a piece of code has been highlighted
-         *
-         * @param {Function} callback
-         */
-        onHighlight: function(callback) {
-            onHighlight = callback;
-        },
-
-        /**
-         * method to set a global class that will be applied to all spans
-         *
-         * @param {string} class_name
-         */
-        addClass: function(class_name) {
-            global_class = class_name;
-        },
-
-        /**
-         * starts the magic rainbow
-         *
-         * @returns void
-         */
-        color: function() {
-
-            // if you want to straight up highlight a string you can pass the string of code,
-            // the language, and a callback function
-            if (typeof arguments[0] == 'string') {
-                return _highlightBlockForLanguage(arguments[0], arguments[1], arguments[2]);
-            }
-
-            // if you pass a callback function then we rerun the color function
-            // on all the code and call the callback function on complete
-            if (typeof arguments[0] == 'function') {
-                return _highlight(0, arguments[0]);
-            }
-
-            // otherwise we use whatever node you passed in with an optional
-            // callback function as the second parameter
-            _highlight(arguments[0], arguments[1]);
-        }
-    };
-}) ();
-
-/**
- * adds event listener to start highlighting
- */
+//UTILS
 (function() {
-    if (document.addEventListener) {
-        return document.addEventListener('DOMContentLoaded', Rainbow.color, false);
+    window.createSpring = function createSpring(springSystem, friction, tension, rawValues) {
+        var spring = springSystem.createSpring();
+        var springConfig;
+        if (rawValues) {
+            springConfig = new rebound.SpringConfig(friction, tension);
+        } else {
+            springConfig = rebound.SpringConfig.fromOrigamiTensionAndFriction(friction, tension);
+        }
+        spring.setSpringConfig(springConfig);
+        spring.setCurrentValue(0);
+        return spring;
     }
-}) ();
-
-// When using Google closure compiler in advanced mode some methods
-// get renamed.  This keeps a public reference to these methods so they can
-// still be referenced from outside this library.
-Rainbow["onHighlight"] = Rainbow.onHighlight;
-Rainbow["addClass"] = Rainbow.addClass;
-
-/**
-* C# patterns
-*
-* @author Dan Stewart
-* @version 1.0.1
-*/
-Rainbow.extend('csharp', [
-	{
-        // @see http://msdn.microsoft.com/en-us/library/23954zh5.aspx
-		'name': 'constant',
-		'pattern': /\b(false|null|true)\b/g
-	},
-	{
-		// @see http://msdn.microsoft.com/en-us/library/x53a06bb%28v=vs.100%29.aspx
-		// Does not support putting an @ in front of a keyword which makes it not a keyword anymore.
-		'name': 'keyword',
-		'pattern': /\b(abstract|add|alias|ascending|as|base|bool|break|byte|case|catch|char|checked|class|const|continue|decimal|default|delegate|descending|double|do|dynamic|else|enum|event|explicit|extern|false|finally|fixed|float|foreach|for|from|get|global|goto|group|if|implicit|int|interface|internal|into|in|is|join|let|lock|long|namespace|new|object|operator|orderby|out|override|params|partial|private|protected|public|readonly|ref|remove|return|sbyte|sealed|select|set|short|sizeof|stackalloc|static|string|struct|switch|this|throw|try|typeof|uint|unchecked|ulong|unsafe|ushort|using|value|var|virtual|void|volatile|where|while|yield)\b/g
-	},
-    {
-        'matches': {
-            1: 'keyword',
-            2: {
-                'name': 'support.class',
-                'pattern': /\w+/g
-            }
-        },
-        'pattern': /(typeof)\s([^\$].*?)(\)|;)/g
-    },
-    {
-        'matches': {
-            1: 'keyword.namespace',
-            2: {
-                'name': 'support.namespace',
-                'pattern': /\w+/g
-            }
-        },
-        'pattern': /\b(namespace)\s(.*?);/g
-    },
-    {
-        'matches': {
-            1: 'storage.modifier',
-            2: 'storage.class',
-            3: 'entity.name.class',
-            4: 'storage.modifier.extends',
-            5: 'entity.other.inherited-class'
-        },
-        'pattern': /\b(abstract|sealed)?\s?(class)\s(\w+)(\sextends\s)?([\w\\]*)?\s?\{?(\n|\})/g
-    },
-    {
-        'name': 'keyword.static',
-        'pattern': /\b(static)\b/g
-    },
-    {
-        'matches': {
-            1: 'keyword.new',
-			2: {
-                'name': 'support.class',
-                'pattern': /\w+/g
-            }
-
-        },
-        'pattern': /\b(new)\s([^\$].*?)(?=\)|\(|;|&)/g
-    },
-	{
-		'name': 'string',
-		'pattern': /(")(.*?)\1/g
-	},
-	{
-		'name': 'integer',
-		'pattern': /\b(0x[\da-f]+|\d+)\b/g
-	},
-	{
-        'name': 'comment',
-        'pattern': /\/\*[\s\S]*?\*\/|(\/\/)[\s\S]*?$/gm
-    },
-	{
-		'name': 'operator',
-		// @see http://msdn.microsoft.com/en-us/library/6a71f45d%28v=vs.100%29.aspx
-		// ++ += + -- -= - <<= << <= => >>= >> >= != ! ~ ^ || && &= & ?? :: : *= * |= %= |= == =
-		'pattern': /(\+\+|\+=|\+|--|-=|-|&lt;&lt;=|&lt;&lt;|&lt;=|=&gt;|&gt;&gt;=|&gt;&gt;|&gt;=|!=|!|~|\^|\|\||&amp;&amp;|&amp;=|&amp;|\?\?|::|:|\*=|\*|\/=|%=|\|=|==|=)/g
-	},
-    {
-		// @see http://msdn.microsoft.com/en-us/library/ed8yd1ha%28v=vs.100%29.aspx
-		'name': 'preprocessor',
-		'pattern': /(\#if|\#else|\#elif|\#endif|\#define|\#undef|\#warning|\#error|\#line|\#region|\#endregion|\#pragma)[\s\S]*?$/gm
-	}
-], true);
-
-/**
- * CSS patterns
- *
- * @author Craig Campbell
- * @version 1.0.9
- */
-Rainbow.extend('css', [
-    {
-        'name': 'comment',
-        'pattern': /\/\*[\s\S]*?\*\//gm
-    },
-    {
-        'name': 'constant.hex-color',
-        'pattern': /#([a-f0-9]{3}|[a-f0-9]{6})(?=;|\s|,|\))/gi
-    },
-    {
-        'matches': {
-            1: 'constant.numeric',
-            2: 'keyword.unit'
-        },
-        'pattern': /(\d+)(px|em|cm|s|%)?/g
-    },
-    {
-        'name': 'string',
-        'pattern': /('|")(.*?)\1/g
-    },
-    {
-        'name': 'support.css-property',
-        'matches': {
-            1: 'support.vendor-prefix'
-        },
-        'pattern': /(-o-|-moz-|-webkit-|-ms-)?[\w-]+(?=\s?:)(?!.*\{)/g
-    },
-    {
-        'matches': {
-            1: [
-                {
-                    'name': 'entity.name.sass',
-                    'pattern': /&amp;/g
-                },
-                {
-                    'name': 'direct-descendant',
-                    'pattern': /&gt;/g
-                },
-                {
-                    'name': 'entity.name.class',
-                    'pattern': /\.[\w\-_]+/g
-                },
-                {
-                    'name': 'entity.name.id',
-                    'pattern': /\#[\w\-_]+/g
-                },
-                {
-                    'name': 'entity.name.pseudo',
-                    'pattern': /:[\w\-_]+/g
-                },
-                {
-                    'name': 'entity.name.tag',
-                    'pattern': /\w+/g
-                }
-            ]
-        },
-        'pattern': /([\w\ ,\n:\.\#\&\;\-_]+)(?=.*\{)/g
-    },
-    {
-        'matches': {
-            2: 'support.vendor-prefix',
-            3: 'support.css-value'
-        },
-        'pattern': /(:|,)\s*(-o-|-moz-|-webkit-|-ms-)?([a-zA-Z-]*)(?=\b)(?!.*\{)/g
+    window.xlat = function xlat(el, x, y) {
+        el.style.mozTransform =
+            el.style.msTransform =
+                el.style.webkitTransform =
+                    el.style.transform = 'translate3d(' + x + 'px, ' + y + 'px, 0px)';
     }
-], true);
-
-/**
- * Generic language patterns
- *
- * @author Craig Campbell
- * @version 1.0.11
- */
-Rainbow.extend([
-    {
-        'matches': {
-            1: [
-                {
-                    'name': 'keyword.operator',
-                    'pattern': /\=|\+/g
-                },
-                {
-                    'name': 'keyword.dot',
-                    'pattern': /\./g
-                }
-            ],
-            2: {
-                'name': 'string',
-                'matches': {
-                    'name': 'constant.character.escape',
-                    'pattern': /\\('|"){1}/g
-                }
-            }
-        },
-        'pattern': /(\(|\s|\[|\=|:|\+|\.)(('|")([^\\\1]|\\.)*?(\3))/gm
-    },
-    {
-        'name': 'comment',
-        'pattern': /\/\*[\s\S]*?\*\/|(\/\/|\#)[\s\S]*?$/gm
-    },
-    {
-        'name': 'constant.numeric',
-        'pattern': /\b(\d+(\.\d+)?(e(\+|\-)?\d+)?(f|d)?|0x[\da-f]+)\b/gi
-    },
-    {
-        'matches': {
-            1: 'keyword'
-        },
-        'pattern': /\b(and|array|as|b(ool(ean)?|reak)|c(ase|atch|har|lass|on(st|tinue))|d(ef|elete|o(uble)?)|e(cho|lse(if)?|xit|xtends|xcept)|f(inally|loat|or(each)?|unction)|global|if|import|int(eger)?|long|new|object|or|pr(int|ivate|otected)|public|return|self|st(ring|ruct|atic)|switch|th(en|is|row)|try|(un)?signed|var|void|while)(?=\(|\b)/gi
-    },
-    {
-        'name': 'constant.language',
-        'pattern': /true|false|null/g
-    },
-    {
-        'name': 'keyword.operator',
-        'pattern': /\+|\!|\-|&(gt|lt|amp);|\||\*|\=/g
-    },
-    {
-        'matches': {
-            1: 'function.call'
-        },
-        'pattern': /(\w+?)(?=\()/g
-    },
-    {
-        'matches': {
-            1: 'storage.function',
-            2: 'entity.name.function'
-        },
-        'pattern': /(function)\s(.*?)(?=\()/g
+    window.scale = function scale(el, val) {
+        el.style.mozTransform =
+            el.style.msTransform =
+                el.style.webkitTransform =
+                    el.style.transform = 'scale3d(' + val + ', ' + val + ', 1)';
     }
-]);
-
-/**
- * HTML patterns
- *
- * @author Craig Campbell
- * @version 1.0.9
- */
-Rainbow.extend('html', [
-    {
-        'name': 'source.php.embedded',
-        'matches': {
-            2: {
-                'language': 'php'
-            }
-        },
-        'pattern': /&lt;\?=?(?!xml)(php)?([\s\S]*?)(\?&gt;)/gm
-    },
-    {
-        'name': 'source.css.embedded',
-        'matches': {
-            1: {
-                'matches': {
-                    1: 'support.tag.style',
-                    2: [
-                        {
-                            'name': 'entity.tag.style',
-                            'pattern': /^style/g
-                        },
-                        {
-                            'name': 'string',
-                            'pattern': /('|")(.*?)(\1)/g
-                        },
-                        {
-                            'name': 'entity.tag.style.attribute',
-                            'pattern': /(\w+)/g
-                        }
-                    ],
-                    3: 'support.tag.style'
-                },
-                'pattern': /(&lt;\/?)(style.*?)(&gt;)/g
-            },
-            2: {
-                'language': 'css'
-            },
-            3: 'support.tag.style',
-            4: 'entity.tag.style',
-            5: 'support.tag.style'
-        },
-        'pattern': /(&lt;style.*?&gt;)([\s\S]*?)(&lt;\/)(style)(&gt;)/gm
-    },
-    {
-        'name': 'source.js.embedded',
-        'matches': {
-            1: {
-                'matches': {
-                    1: 'support.tag.script',
-                    2: [
-                        {
-                            'name': 'entity.tag.script',
-                            'pattern': /^script/g
-                        },
-
-                        {
-                            'name': 'string',
-                            'pattern': /('|")(.*?)(\1)/g
-                        },
-                        {
-                            'name': 'entity.tag.script.attribute',
-                            'pattern': /(\w+)/g
-                        }
-                    ],
-                    3: 'support.tag.script'
-                },
-                'pattern': /(&lt;\/?)(script.*?)(&gt;)/g
-            },
-            2: {
-                'language': 'javascript'
-            },
-            3: 'support.tag.script',
-            4: 'entity.tag.script',
-            5: 'support.tag.script'
-        },
-        'pattern': /(&lt;script(?! src).*?&gt;)([\s\S]*?)(&lt;\/)(script)(&gt;)/gm
-    },
-    {
-        'name': 'comment.html',
-        'pattern': /&lt;\!--[\S\s]*?--&gt;/g
-    },
-    {
-        'matches': {
-            1: 'support.tag.open',
-            2: 'support.tag.close'
-        },
-        'pattern': /(&lt;)|(\/?\??&gt;)/g
-    },
-    {
-        'name': 'support.tag',
-        'matches': {
-            1: 'support.tag',
-            2: 'support.tag.special',
-            3: 'support.tag-name'
-        },
-        'pattern': /(&lt;\??)(\/|\!?)(\w+)/g
-    },
-    {
-        'matches': {
-            1: 'support.attribute'
-        },
-        'pattern': /([a-z-]+)(?=\=)/gi
-    },
-    {
-        'matches': {
-            1: 'support.operator',
-            2: 'string.quote',
-            3: 'string.value',
-            4: 'string.quote'
-        },
-        'pattern': /(=)('|")(.*?)(\2)/g
-    },
-    {
-        'matches': {
-            1: 'support.operator',
-            2: 'support.value'
-        },
-        'pattern': /(=)([a-zA-Z\-0-9]*)\b/g
-    },
-    {
-        'matches': {
-            1: 'support.attribute'
-        },
-        'pattern': /\s(\w+)(?=\s|&gt;)(?![\s\S]*&lt;)/g
+    window.xfrm = function xfrm(el, xlatX, xlatY, scale, rot) {
+        xlatX = typeof xlatX === 'undefined' ? 0 : xlatX;
+        xlatY = typeof xlatY === 'undefined' ? 0 : xlatY;
+        scale = typeof scale === 'undefined' ? 1 : scale;
+        rot = typeof rot === 'undefined' ? 0 : rot;
+        var xfrm =
+            'translate3d(' + xlatX + 'px, ' + xlatY + 'px, 0px) ' +
+            'scale3d(' + scale + ', ' + scale + ', 1) ' +
+            'rotate(' + rot + 'deg)';
+        el.style.mozTransform = el.style.msTransform = el.style.webkitTransform = el.style.transform = xfrm;
     }
-], true);
-
-/**
-* Java patterns
-*
-* @author Leo Accend
-* @version 1.0.0
-*/
-Rainbow.extend( "java", [
-  {
-    name: "constant",
-    pattern: /\b(false|null|true|[A-Z_]+)\b/g
-  },
-  {
-    matches: {
-      1: "keyword",
-      2: "support.namespace"
-    },
-    pattern: /(import|package)\s(.+)/g
-  },
-  {
-    // see http://docs.oracle.com/javase/tutorial/java/nutsandbolts/_keywords.html
-    name: "keyword",
-    pattern: /\b(abstract|assert|boolean|break|byte|case|catch|char|class|const|continue|default|do|double|else|enum|extends|final|finally|float|for|goto|if|implements|import|instanceof|int|interface|long|native|new|package|private|protected|public|return|short|static|strictfp|super|switch|synchronized|this|throw|throws|transient|try|void|volatile|while)\b/g
-  },
-  {
-    name: "string",
-    pattern: /(".*?")/g
-  },
-  {
-    name: "char",
-    pattern: /(')(.|\\.|\\u[\dA-Fa-f]{4})\1/g
-  },
-  {
-    name: "integer",
-    pattern: /\b(0x[\da-f]+|\d+)L?\b/g
-  },
-  {
-    name: "comment",
-    pattern: /\/\*[\s\S]*?\*\/|(\/\/).*?$/gm
-  },
-  {
-    name: "support.annotation",
-    pattern: /@\w+/g
-  },
-  {
-    matches: {
-      1: "entity.function"
-    },
-    pattern: /([^@\.\s]+)\(/g
-  },
-  {
-    name: "entity.class",
-    pattern: /\b([A-Z]\w*)\b/g
-  },
-  {
-    // see http://docs.oracle.com/javase/tutorial/java/nutsandbolts/operators.html
-    name: "operator",
-    pattern: /(\+{1,2}|-{1,2}|~|!|\*|\/|%|(?:&lt;){1,2}|(?:&gt;){1,3}|instanceof|(?:&amp;){1,2}|\^|\|{1,2}|\?|:|(?:=|!|\+|-|\*|\/|%|\^|\||(?:&lt;){1,2}|(?:&gt;){1,3})?=)/g
-  }
-], true );
-
-/**
- * Javascript patterns
- *
- * @author Craig Campbell
- * @version 1.0.9
- */
-Rainbow.extend('javascript', [
-
-    /**
-     * matches $. or $(
-     */
-    {
-        'name': 'selector',
-        'pattern': /(\s|^)\$(?=\.|\()/g
-    },
-    {
-        'name': 'support',
-        'pattern': /\b(window|document)\b/g
-    },
-    {
-        'matches': {
-            1: 'support.property'
-        },
-        'pattern': /\.(length|node(Name|Value))\b/g
-    },
-    {
-        'matches': {
-            1: 'support.function'
-        },
-        'pattern': /(setTimeout|setInterval)(?=\()/g
-
-    },
-    {
-        'matches': {
-            1: 'support.method'
-        },
-        'pattern': /\.(getAttribute|push|getElementById|getElementsByClassName|log|setTimeout|setInterval)(?=\()/g
-    },
-
-    /**
-     * matches any escaped characters inside of a js regex pattern
-     *
-     * @see https://github.com/ccampbell/rainbow/issues/22
-     *
-     * this was causing single line comments to fail so it now makes sure
-     * the opening / is not directly followed by a *
-     *
-     * @todo check that there is valid regex in match group 1
-     */
-    {
-        'name': 'string.regexp',
-        'matches': {
-            1: 'string.regexp.open',
-            2: {
-                'name': 'constant.regexp.escape',
-                'pattern': /\\(.){1}/g
-            },
-            3: 'string.regexp.close',
-            4: 'string.regexp.modifier'
-        },
-        'pattern': /(\/)(?!\*)(.+)(\/)([igm]{0,3})/g
-    },
-
-    /**
-     * matches runtime function declarations
-     */
-    {
-        'matches': {
-            1: 'storage',
-            3: 'entity.function'
-        },
-        'pattern': /(var)?(\s|^)(\S*)(?=\s?=\s?function\()/g
-    },
-
-    /**
-     * matches constructor call
-     */
-    {
-        'matches': {
-            1: 'keyword',
-            2: 'entity.function'
-        },
-        'pattern': /(new)\s+(.*)(?=\()/g
-    },
-
-    /**
-     * matches any function call in the style functionName: function()
-     */
-    {
-        'name': 'entity.function',
-        'pattern': /(\w+)(?=:\s{0,}function)/g
+    window.drawGridLines = function(canvas, ctx, graphScale) {
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height / 2);
+        ctx.lineTo(canvas.width, canvas.height / 2);
+        ctx.moveTo(0, -1 * graphScale + canvas.height / 2);
+        ctx.lineTo(canvas.width, -1 * graphScale + canvas.height / 2);
+        ctx.moveTo(0, 1 * graphScale + canvas.height / 2);
+        ctx.lineTo(canvas.width, 1 * graphScale + canvas.height / 2);
+        ctx.lineWidth = 0.5;
+        ctx.strokeStyle = '#ff0000';
+        ctx.stroke();
+        ctx.closePath();
+        ctx.lineWidth = 0.25;
+        ctx.beginPath();
+        for (var i = 0; i < 600; i+= 10) {
+            ctx.moveTo(0, i);
+            ctx.lineTo(canvas.width, i);
+        }
+        for (var i = 0; i < 600; i+=10) {
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i, canvas.height);
+        }
+        ctx.strokeStyle = '#0000ff';
+        ctx.stroke();
+        ctx.lineWidth = 1;
+        ctx.closePath();
     }
-]);
-
-/**
- * PHP patterns
- *
- * @author Craig Campbell
- * @version 1.0.8
- */
-Rainbow.extend('php', [
-    {
-        'name': 'support',
-        'pattern': /\becho\b/g
-    },
-    {
-        'matches': {
-            1: 'variable.dollar-sign',
-            2: 'variable'
-        },
-        'pattern': /(\$)(\w+)\b/g
-    },
-    {
-        'name': 'constant.language',
-        'pattern': /true|false|null/ig
-    },
-    {
-        'name': 'constant',
-        'pattern': /\b[A-Z0-9_]{2,}\b/g
-    },
-    {
-        'name': 'keyword.dot',
-        'pattern': /\./g
-    },
-    {
-        'name': 'keyword',
-        'pattern': /\b(die|end(for(each)?|switch|if)|case|require(_once)?|include(_once)?)(?=\(|\b)/g
-    },
-    {
-        'matches': {
-            1: 'keyword',
-            2: {
-                'name': 'support.class',
-                'pattern': /\w+/g
-            }
-        },
-        'pattern': /(instanceof)\s([^\$].*?)(\)|;)/g
-    },
-
-    /**
-     * these are the top 50 most used PHP functions
-     * found from running a script and checking the frequency of each function
-     * over a bunch of popular PHP frameworks then combining the results
-     */
-    {
-        'matches': {
-            1: 'support.function'
-        },
-        'pattern': /\b(array(_key_exists|_merge|_keys|_shift)?|isset|count|empty|unset|printf|is_(array|string|numeric|object)|sprintf|each|date|time|substr|pos|str(len|pos|tolower|_replace|totime)?|ord|trim|in_array|implode|end|preg_match|explode|fmod|define|link|list|get_class|serialize|file|sort|mail|dir|idate|log|intval|header|chr|function_exists|dirname|preg_replace|file_exists)(?=\()/g
-    },
-    {
-        'name': 'variable.language.php-tag',
-        'pattern': /(&lt;\?(php)?|\?&gt;)/g
-    },
-    {
-        'matches': {
-            1: 'keyword.namespace',
-            2: {
-                'name': 'support.namespace',
-                'pattern': /\w+/g
-            }
-        },
-        'pattern': /\b(namespace|use)\s(.*?);/g
-    },
-    {
-        'matches': {
-            1: 'storage.modifier',
-            2: 'storage.class',
-            3: 'entity.name.class',
-            4: 'storage.modifier.extends',
-            5: 'entity.other.inherited-class',
-            6: 'storage.modifier.extends',
-            7: 'entity.other.inherited-class'
-        },
-        'pattern': /\b(abstract|final)?\s?(class|interface|trait)\s(\w+)(\sextends\s)?([\w\\]*)?(\simplements\s)?([\w\\]*)?\s?\{?(\n|\})/g
-    },
-    {
-        'name': 'keyword.static',
-        'pattern': /self::|static::/g
-    },
-    {
-        'matches': {
-            1: 'storage.function',
-            2: 'support.magic'
-        },
-        'pattern': /(function)\s(__.*?)(?=\()/g
-    },
-    {
-        'matches': {
-            1: 'keyword.new',
-            2: {
-                'name': 'support.class',
-                'pattern': /\w+/g
-            }
-        },
-        'pattern': /\b(new)\s([^\$].*?)(?=\)|\(|;)/g
-    },
-    {
-        'matches': {
-            1: {
-                'name': 'support.class',
-                'pattern': /\w+/g
-            },
-            2: 'keyword.static'
-        },
-        'pattern': /([\w\\]*?)(::)(?=\b|\$)/g
-    },
-    {
-        'matches': {
-            2: {
-                'name': 'support.class',
-                'pattern': /\w+/g
-            }
-        },
-        'pattern': /(\(|,\s?)([\w\\]*?)(?=\s\$)/g
+    window.mapValueFromRangeToRange = function(value, fromLow, fromHigh, toLow, toHigh) {
+        fromRangeSize = fromHigh - fromLow;
+        toRangeSize = toHigh - toLow;
+        valueScale = (value - fromLow) / fromRangeSize;
+        return toLow + (valueScale * toRangeSize);
     }
-]);
-
-/**
- * Python patterns
- *
- * @author Craig Campbell
- * @version 1.0.9
- */
-Rainbow.extend('python', [
-    /**
-     * don't highlight self as a keyword
-     */
-    {
-        'name': 'variable.self',
-        'pattern': /self/g
-    },
-    {
-        'name': 'constant.language',
-        'pattern': /None|True|False|NotImplemented|\.\.\./g
-    },
-    {
-        'name': 'support.object',
-        'pattern': /object/g
-    },
-
-    /**
-     * built in python functions
-     *
-     * this entire list is 580 bytes minified / 379 bytes gzipped
-     *
-     * @see http://docs.python.org/library/functions.html
-     *
-     * @todo strip some out or consolidate the regexes with matching patterns?
-     */
-    {
-        'name': 'support.function.python',
-        'pattern': /\b(bs|divmod|input|open|staticmethod|all|enumerate|int|ord|str|any|eval|isinstance|pow|sum|basestring|execfile|issubclass|print|super|bin|file|iter|property|tuple|bool|filter|len|range|type|bytearray|float|list|raw_input|unichr|callable|format|locals|reduce|unicode|chr|frozenset|long|reload|vars|classmethod|getattr|map|repr|xrange|cmp|globals|max|reversed|zip|compile|hasattr|memoryview|round|__import__|complex|hash|min|set|apply|delattr|help|next|setattr|buffer|dict|hex|object|slice|coerce|dir|id|oct|sorted|intern)(?=\()/g
-    },
-    {
-        'matches': {
-            1: 'keyword'
-        },
-        'pattern': /\b(pass|lambda|with|is|not|in|from|elif|raise|del)(?=\(|\b)/g
-    },
-    {
-        'matches': {
-            1: 'storage.class',
-            2: 'entity.name.class',
-            3: 'entity.other.inherited-class'
-        },
-        'pattern': /(class)\s+(\w+)\((\w+?)\)/g
-    },
-    {
-        'matches': {
-            1: 'storage.function',
-            2: 'support.magic'
-        },
-        'pattern': /(def)\s+(__\w+)(?=\()/g
-    },
-    {
-        'name': 'support.magic',
-        'pattern': /__(name)__/g
-    },
-    {
-        'matches': {
-            1: 'keyword.control',
-            2: 'support.exception.type'
-        },
-        'pattern': /(except) (\w+):/g
-    },
-    {
-        'matches': {
-            1: 'storage.function',
-            2: 'entity.name.function'
-        },
-        'pattern': /(def)\s+(\w+)(?=\()/g
-    },
-    {
-        'name': 'entity.name.function.decorator',
-        'pattern': /@([\w\.]+)/g
-    },
-    {
-        'name': 'comment.docstring',
-        'pattern': /('{3}|"{3})[\s\S]*?\1/gm
+    window.downEvt = window.ontouchstart !== undefined ? 'touchstart' : 'mousedown';
+    window.upEvt = window.ontouchend !== undefined ? 'touchend' : 'mouseup';
+// Create a couple of utilities.
+    var slice = Array.prototype.slice;
+    var concat = Array.prototype.concat;
+    window.bind = function(func, context) {
+        args = slice.call(arguments, 2);
+        return function() {
+            func.apply(context, concat.call(args, slice.call(arguments)));
+        };
     }
-]);
+    window.extend = function(target, source) {
+        for (var key in source) {
+            if (source.hasOwnProperty(key)) {
+                target[key] = source[key];
+            }
+        }
+    }
+})();
 
-/**
- * Ruby patterns
- *
- * @author Matthew King
- * @author Jesse Farmer <jesse@20bits.com>
- * @author actsasflinn
- * @version 1.0.6
- */
-
-Rainbow.extend('ruby', [
-    /**
-    * __END__ DATA
-    */
-    {
-        'matches': {
-            1: 'variable.language',
-            2: {
-              'language': null
+// HAMBURGER
+(function() {
+    var hb = {};
+// import a couple of utils from rebound.
+    var deg2rad = rebound.MathUtil.degreesToRadians;
+    var mapVal = rebound.MathUtil.mapValueInRange;
+// HamburgerButton animates between a 3 bar menu icon and an X icon using a
+// Rebound spring to drive the animation. You can configure its container, size
+// and color.
+    hb.HamburgerButton = function(container, size, color) {
+        this.canvas = document.createElement('canvas');
+        this.ctx = this.canvas.getContext('2d');
+// Configure all the styles and dimensions for the button.
+        this.padding = size * 0.1;
+        this.size = size - this.padding * 2;
+        this.width = this.size;
+        this.height = this.size;
+        this.canvas.width = size;
+        this.canvas.height = size;
+        this.barHeight = this.size / 6;
+        this.rotatedXlat = Math.sqrt((this.barHeight * this.barHeight) / 2);
+        this.radius = this .size * 0.05;
+        var ab = (this.width - this.rotatedXlat);
+        this.rotatedWidth = Math.sqrt(ab * ab + ab * ab);
+        this.color = color;
+// Clear out the target container.
+        this.container = container;
+        this.container.innerHTML = '';
+// Create our animation spring. Here you could also pass in a custom SpringConfig
+// if you wanted to get a more or less bouncy animation curve.
+        this.springSystem = new rebound.SpringSystem();
+        this.animationSpring = this.springSystem.createSpring();
+        this.animationSpring.addListener(this);
+// Perform and initial render to the canvas and apend the example canvas to
+// the container.
+        this.render();
+        container.appendChild(this.canvas);
+        this.canvas.addEventListener('click', bind(this.toggle, this));
+    };
+    extend(hb.HamburgerButton.prototype, {
+        /**
+         * Switch the spring between its open (0) and closed (1) states. This will
+         * drive the spring to animate, which will trigger rendering of the component.
+         */
+        toggle: function() {
+            if (this.animationSpring.getEndValue() === 1) {
+                this.animationSpring.setEndValue(0);
+            } else {
+                this.animationSpring.setEndValue(1);
             }
         },
-        //find __END__ and consume remaining text
-        'pattern': /^(__END__)\n((?:.*\n)*)/gm
-    },
-    /**
-     * Strings
-     *   1. No support for multi-line strings
-     */
-    {
-        'name': 'string',
-        'matches': {
-            1: 'string.open',
-            2: [{
-                'name': 'string.interpolation',
-                'matches': {
-                    1: 'string.open',
-                    2: {
-                      'language': 'ruby'
-                    },
-                    3: 'string.close'
-                },
-                'pattern': /(\#\{)(.*?)(\})/g
-            }],
-            3: 'string.close'
+        /**
+         * Listen to the spring and call render whenever it updates.
+         */
+        onSpringUpdate: function(spring) {
+            this.render();
         },
-        'pattern': /("|`)(.*?[^\\\1])?(\1)/g
-    },
-    {
-        'name': 'string',
-        'pattern': /('|"|`)([^\\\1\n]|\\.)*?\1/g
-    },
-    {
-        'name': 'string',
-        'pattern': /%[qQ](?=(\(|\[|\{|&lt;|.)(.*?)(?:'|\)|\]|\}|&gt;|\1))(?:\(\2\)|\[\2\]|\{\2\}|\&lt;\2&gt;|\1\2\1)/g
-    },
-    /**
-     * Heredocs
-     * Heredocs of the form `<<'HTML' ... HTML` are unsupported.
-     */
-    {
-        'matches': {
-            1: 'string',
-            2: 'string',
-            3: 'string'
+        /**
+         * This just draws a rounded rect with the configured corner radius and dimensions.
+         */
+        drawBar: function(width) {
+            this.ctx.fillStyle = this.color;
+            this.ctx.moveTo(0, 0);
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.radius, 0);
+            this.ctx.lineTo(width - this.radius, 0);
+            this.ctx.quadraticCurveTo(width, 0, width, this.radius);
+            this.ctx.lineTo(width, this.barHeight - this.radius);
+            this.ctx.quadraticCurveTo(width, this.barHeight, width - this.radius, this.barHeight);
+            this.ctx.lineTo(this.radius, this.barHeight);
+            this.ctx.quadraticCurveTo(0, this.barHeight, 0, this.barHeight - this.radius);
+            this.ctx.lineTo(0, this.radius);
+            this.ctx.quadraticCurveTo(0, 0, this.radius, 0);
+            this.ctx.closePath();
+            this.ctx.fill();
         },
-        'pattern': /(&lt;&lt;)(\w+).*?$([\s\S]*?^\2)/gm
-    },
-    {
-        'matches': {
-            1: 'string',
-            2: 'string',
-            3: 'string'
-        },
-        'pattern': /(&lt;&lt;\-)(\w+).*?$([\s\S]*?\2)/gm
-    },
-    /**
-     * Regular expressions
-     * Escaped delimiter (`/\//`) is unsupported.
-     */
-    {
-        'name': 'string.regexp',
-        'matches': {
-            1: 'string.regexp',
-            2: {
-                'name': 'string.regexp',
-                'pattern': /\\(.){1}/g
-            },
-            3: 'string.regexp',
-            4: 'string.regexp'
-        },
-        'pattern': /(\/)(.*?)(\/)([a-z]*)/g
-    },
-    {
-        'name': 'string.regexp',
-        'matches': {
-            1: 'string.regexp',
-            2: {
-                'name': 'string.regexp',
-                'pattern': /\\(.){1}/g
-            },
-            3: 'string.regexp',
-            4: 'string.regexp'
-        },
-        'pattern': /%r(?=(\(|\[|\{|&lt;|.)(.*?)('|\)|\]|\}|&gt;|\1))(?:\(\2\)|\[\2\]|\{\2\}|\&lt;\2&gt;|\1\2\1)([a-z]*)/g
-    },
-    /**
-     * Comments
-     */
-    {
-        'name': 'comment',
-        'pattern': /#.*$/gm
-    },
-    {
-        'name': 'comment',
-        'pattern': /^\=begin[\s\S]*?\=end$/gm
-    },
-    /**
-     * Symbols
-     */
-    {
-        'matches': {
-            1: 'constant'
-        },
-        'pattern': /(\w+:)[^:]/g
-    },
-    {
-        'matches': {
-            1: 'constant.symbol'
-        },
-        'pattern': /[^:](:(?:\w+|(?=['"](.*?)['"])(?:"\2"|'\2')))/g
-    },
-    {
-        'name': 'constant.numeric',
-        'pattern': /\b(0x[\da-f]+|\d+)\b/g
-    },
-    {
-        'name': 'support.class',
-        'pattern': /\b[A-Z]\w*(?=((\.|::)[A-Za-z]|\[))/g
-    },
-    {
-        'name': 'constant',
-        'pattern': /\b[A-Z]\w*\b/g
-    },
-    /**
-     * Keywords, variables, constants, and operators
-     *   In Ruby some keywords are valid method names, e.g., MyClass#yield
-     *   Don't mark those instances as "keywords"
-     */
-    {
-        'matches': {
-            1: 'storage.class',
-            2: 'entity.name.class',
-            3: 'entity.other.inherited-class'
-        },
-        'pattern': /\s*(class)\s+((?:(?:::)?[A-Z]\w*)+)(?:\s+&lt;\s+((?:(?:::)?[A-Z]\w*)+))?/g
-    },
-    {
-        'matches': {
-            1: 'storage.module',
-            2: 'entity.name.class'
-        },
-        'pattern': /\s*(module)\s+((?:(?:::)?[A-Z]\w*)+)/g
-    },
-    {
-        'name': 'variable.global',
-        'pattern': /\$([a-zA-Z_]\w*)\b/g
-    },
-    {
-        'name': 'variable.class',
-        'pattern': /@@([a-zA-Z_]\w*)\b/g
-    },
-    {
-        'name': 'variable.instance',
-        'pattern': /@([a-zA-Z_]\w*)\b/g
-    },
-    {
-        'matches': {
-            1: 'keyword.control'
-        },
-        'pattern': /[^\.]\b(BEGIN|begin|case|class|do|else|elsif|END|end|ensure|for|if|in|module|rescue|then|unless|until|when|while)\b(?![?!])/g
-    },
-    {
-        'matches': {
-            1: 'keyword.control.pseudo-method'
-        },
-        'pattern': /[^\.]\b(alias|alias_method|break|next|redo|retry|return|super|undef|yield)\b(?![?!])|\bdefined\?|\bblock_given\?/g
-    },
-    {
-        'matches': {
-            1: 'constant.language'
-        },
-        'pattern': /\b(nil|true|false)\b(?![?!])/g
-    },
-    {
-        'matches': {
-            1: 'variable.language'
-        },
-        'pattern': /\b(__(FILE|LINE)__|self)\b(?![?!])/g
-    },
-    {
-        'matches': {
-            1: 'keyword.special-method'
-        },
-        'pattern': /\b(require|gem|initialize|new|loop|include|extend|raise|attr_reader|attr_writer|attr_accessor|attr|catch|throw|private|module_function|public|protected)\b(?![?!])/g
-    },
-    {
-        'name': 'keyword.operator',
-        'pattern': /\s\?\s|=|&lt;&lt;|&lt;&lt;=|%=|&=|\*=|\*\*=|\+=|\-=|\^=|\|{1,2}=|&lt;&lt;|&lt;=&gt;|&lt;(?!&lt;|=)|&gt;(?!&lt;|=|&gt;)|&lt;=|&gt;=|===|==|=~|!=|!~|%|&amp;|\*\*|\*|\+|\-|\/|\||~|&gt;&gt;/g
-    },
-    {
-        'matches': {
-            1: 'keyword.operator.logical'
-        },
-        'pattern': /[^\.]\b(and|not|or)\b/g
-    },
-
-    /**
-    * Functions
-    *   1. No support for marking function parameters
-    */
-    {
-        'matches': {
-            1: 'storage.function',
-            2: 'entity.name.function'
-        },
-        'pattern': /(def)\s(.*?)(?=(\s|\())/g
+        /**
+         * On every frame of the animation, render will draw the current state of
+         * the animation based on interpolation of the springs value between 0 and 1.
+         * Driving an animation off of a zero to one spring is a really simple way
+         * to coordinate multiple transitions on a common animation spring.
+         * `rebound.MathUtil.mapValueInRange` is helpful for converting numbers between
+         * an input range and an output range.
+         */
+        render: function() {
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            this.ctx.save();
+            this.ctx.translate(this.padding, this.padding);
+            var xlatX, xlatY, rot, width;
+            var pos = this.animationSpring.getCurrentValue();
+            var val = this.animationSpring.getCurrentValue();
+            xlatX = mapVal(val, 0, 1, 0, this.rotatedXlat);
+            rot = mapVal(val, 0, 1, 0, 45);
+            width = mapVal(val, 0, 1, this.width, this.rotatedWidth);
+// draw top bar
+            this.ctx.save();
+            this.ctx.translate(xlatX, 0);
+            this.ctx.rotate(deg2rad(rot));
+            this.drawBar(width);
+            this.ctx.restore();
+// draw middle bar
+            this.ctx.save();
+            xlatX = mapVal(val, 0, 1, 0, this.width / 2);
+            width = mapVal(val, 0, 1, this.width, 0);
+            this.ctx.translate(xlatX, this.height / 2 - this.barHeight / 2);
+            this.drawBar(width);
+            this.ctx.restore();
+// draw bottom bar
+            this.ctx.save();
+            xlatY = mapVal(val, 0, 1, this.height - this.barHeight, this.height - this.rotatedXlat);
+            rot = mapVal(val, 0, 1, 0, -45);
+            width = mapVal(val, 0, 1, this.width, this.rotatedWidth);
+            this.ctx.translate(0, xlatY);
+            this.ctx.rotate(deg2rad(rot));
+            this.drawBar(width);
+            this.ctx.restore();
+            this.ctx.restore();
+        }
+    });
+// Export the control.
+    if (typeof exports != 'undefined') {
+        extend(exports, hb);
+    } else if (typeof window != 'undefined') {
+        window.hamburgerButton = hb;
     }
-], true);
-
-/**
- * Shell patterns
- *
- * @author Matthew King
- * @author Craig Campbell
- * @version 1.0.3
- */
-Rainbow.extend('shell', [
-    /**
-     * This handles the case where subshells contain quotes.
-     * For example: `"$(resolve_link "$name" || true)"`.
-     *
-     * Caveat: This really should match balanced parentheses, but cannot.
-     * @see http://stackoverflow.com/questions/133601/can-regular-expressions-be-used-to-match-nested-patterns
-     */
-    {
-        'name': 'shell',
-        'matches': {
-            1: {
-                'language': 'shell'
-            }
-        },
-        'pattern': /\$\(([\s\S]*?)\)/gm
-    },
-    {
-        'matches': {
-            2: 'string'
-        },
-        'pattern': /(\(|\s|\[|\=)(('|")[\s\S]*?(\3))/gm
-    },
-    {
-        'name': 'keyword.operator',
-        'pattern': /&lt;|&gt;|&amp;/g
-    },
-    {
-        'name': 'comment',
-        'pattern': /\#[\s\S]*?$/gm
-    },
-    {
-        'name': 'storage.function',
-        'pattern': /(.+?)(?=\(\)\s{0,}\{)/g
-    },
-    /**
-     * Environment variables
-     */
-    {
-        'name': 'support.command',
-        'pattern': /\b(echo|rm|ls|(mk|rm)dir|cd|find|cp|exit|pwd|exec|trap|source|shift|unset)/g
-    },
-    {
-        'matches': {
-            1: 'keyword'
-        },
-        'pattern': /\b(break|case|continue|do|done|elif|else|esac|eval|export|fi|for|function|if|in|local|return|set|then|unset|until|while)(?=\(|\b)/g
-    }
-], true);
+    createHamburgerButtonExample = function(container, size, color, bgColor) {
+        var ex = document.createElement('div');
+        ex.className = 'Layout-hamburger';
+        container.appendChild(ex);
+        ex.style.backgroundColor = bgColor;
+        ex.style.opacity = 0.75;
+        ex.style.marginTop = (size * -0.4) + 'px';
+        new hamburgerButton.HamburgerButton(ex, size, color);
+    };
+    var doit = function() {
+        var container = document.getElementById('hamburgerButton');
+        createHamburgerButtonExample(container, 25, '#000000');
+    };
+    document.addEventListener('DOMContentLoaded', doit);
+})();
