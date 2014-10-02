@@ -65,7 +65,7 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="format-detection" content="telephone=no">
     <title><?php echo $json["name"]; ?></title>
-    <link href="css/style.min.css" type="text/css" rel="stylesheet">
+    <link href="css/style.min.css?1002b" type="text/css" rel="stylesheet">
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -170,7 +170,7 @@ for($i=0;$i<count($data['_embedded']['robbestad']);$i++){
 </body>
 <!-- Contains jQuery, React and compiled js (included jsx) -->
 <script type="text/javascript" src="./js/libs.min.js?2809b"></script>
-<script type="text/javascript" src="./js/app.js?0110_0.0.9"></script>
+<script type="text/javascript" src="./js/app.js?2ss"></script>
 <script>
     (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
         (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),

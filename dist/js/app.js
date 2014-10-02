@@ -22376,6 +22376,7 @@ var Menu = React.createClass({displayName: 'Menu',
     componentDidMount: function() {
         this.setInterval(this.tick, 150); // Call a method on the mixin
         this.fetchBlogData();
+
     },
 
     getInitialState: function(){
@@ -23234,15 +23235,13 @@ module.exports = Sidebar;
     'use strict';
 })();
 
-$(document).ready(function () {
-    FastClick.attach(document.body);
-});
 
-var myScroll;
-function loaded() {
-    var myScroll = new IScroll('#slider');
-    myScroll.enable();
-}
+
+//var myScroll;
+//function loaded() {
+//    var myScroll = new IScroll('#slider');
+//    myScroll.enable();
+//}
 
 
 //UTILS
@@ -23460,7 +23459,39 @@ function loaded() {
     } else if (typeof window != 'undefined') {
         window.hamburgerButton = hb;
     }
-    createHamburgerButtonExample = function(container, size, color, bgColor) {
+    //createHamburger = function(container, size, color, bgColor) {
+    //    var ex = document.createElement('div');
+    //    ex.className = 'Layout-hamburger';
+    //    container.appendChild(ex);
+    //    ex.style.backgroundColor = bgColor;
+    //    ex.style.opacity = 0.75;
+    //    ex.style.marginTop = (size * -0.4) + 'px';
+    //    new hamburgerButton.HamburgerButton(ex, size, color);
+    //};
+    //var doit = function() {
+    //    var container = document.getElementById('hamburgerButton');
+    //    createHamburger(container, 25, '#000000');
+    //};
+
+    //document.addEventListener('DOMContentLoaded', doit);
+})();
+
+function once (fn) {
+    var f = function () {
+        if (f.hasResult) return f.value;
+        f.hasResult = true;
+        f.value = fn.apply(this,
+            arguments);
+        fn = null;
+        return f.value;
+    }
+    f.hasResult = false;
+    return f;
+}
+
+
+once(function(arg) {
+    var createHamburger = function(container, size, color, bgColor) {
         var ex = document.createElement('div');
         ex.className = 'Layout-hamburger';
         container.appendChild(ex);
@@ -23469,9 +23500,10 @@ function loaded() {
         ex.style.marginTop = (size * -0.4) + 'px';
         new hamburgerButton.HamburgerButton(ex, size, color);
     };
-    var doit = function() {
-        var container = document.getElementById('hamburgerButton');
-        createHamburgerButtonExample(container, 25, '#000000');
-    };
-    document.addEventListener('DOMContentLoaded', doit);
+    createHamburger(document.getElementById('hamburgerButton'), 25, '#000000');
 })();
+
+$(document).ready(function () {
+    FastClick.attach(document.body);
+
+});

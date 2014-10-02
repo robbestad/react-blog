@@ -24,6 +24,7 @@ var Menu = React.createClass({
     componentDidMount: function() {
         this.setInterval(this.tick, 150); // Call a method on the mixin
         this.fetchBlogData();
+
     },
 
     getInitialState: function(){

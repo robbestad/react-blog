@@ -233,6 +233,7 @@ gulp.task('watch', function () {
     //gulp.watch(paths.scss, ['css']);
     //gulp.watch(paths.php, ['php2html']);
 
+    gulp.watch(['src/js/ready.js'], ['minifyapp']);
     gulp.watch(['src/jsx/**/*','src/js/blogdata.js'], ['minifyapp']);
     gulp.watch('src/scss/**/*', ['css']);
     gulp.watch(paths.html, ['html']);
