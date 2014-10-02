@@ -23351,7 +23351,7 @@ module.exports = Sidebar;
 // Configure all the styles and dimensions for the button.
         this.padding = size * 0.1;
         this.size = size - this.padding * 2;
-        this.width = this.size*1.25;
+        this.width = this.size*1.35;
         this.height = this.size;
         this.canvas.width = this.width + this.padding *2;
         this.canvas.height = size;
@@ -23438,7 +23438,7 @@ module.exports = Sidebar;
             this.ctx.restore();
 // draw middle bar
             this.ctx.save();
-            xlatX = mapVal(val, 0, 1, 0, this.width / 2);
+            xlatX = mapVal(val, 0, 1, 0, this.width / 3.5);
             width = mapVal(val, 0, 1, this.width, 0);
             this.ctx.translate(xlatX, this.height / 2 - this.barHeight / 2);
             this.drawBar(width);
@@ -23483,10 +23483,10 @@ once(function(arg) {
         ex.className = 'Layout-hamburger';
         container.appendChild(ex);
         ex.style.backgroundColor = bgColor;
-        ex.style.opacity = 1.0;
-        ex.style.marginTop = (size * -0.4) + 'px';
+        ex.style.opacity = 0.75;
+        ex.style.marginTop = (size * -0.15) + 'px';
         new hamburgerButton.HamburgerButton(ex, size, color);
-    })(document.getElementById('hamburgerButton'), 25, '#000000');
+    })(document.getElementById('hamburgerButton'), 44, '#000000');
 })();
 
 $(document).ready(function () {
