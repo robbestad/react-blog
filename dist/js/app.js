@@ -23483,10 +23483,10 @@ once(function(arg) {
         ex.className = 'Layout-hamburger';
         container.appendChild(ex);
         ex.style.backgroundColor = bgColor;
-        ex.style.opacity = 0.75;
-        ex.style.marginTop = (size * -0.15) + 'px';
+        ex.style.opacity = 1;
+        ex.style.marginTop = (size * -0.1) + 'px';
         new hamburgerButton.HamburgerButton(ex, size, color);
-    })(document.getElementById('hamburgerButton'), 44, '#000000');
+    })(document.getElementById('hamburgerButton'), 38, '#000000');
 })();
 
 $(document).ready(function () {
