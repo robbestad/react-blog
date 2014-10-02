@@ -22567,7 +22567,8 @@ var Menu = React.createClass({displayName: 'Menu',
         });
     },
 
-    toggleNavClick: function() {
+    toggleNavClick: function(e) {
+        if("hamburger" !== e.target.id) return;
         var closeNav = this.state.sliderVisible ? true : false;
         var b=$("body");
         var cf=$(".container-fluid");
@@ -23345,6 +23346,7 @@ module.exports = Sidebar;
 // and color.
     hb.HamburgerButton = function(container, size, color) {
         this.canvas = document.createElement('canvas');
+        this.canvas.id="hamburger";
         this.ctx = this.canvas.getContext('2d');
 // Configure all the styles and dimensions for the button.
         this.padding = size * 0.1;

@@ -215,7 +215,8 @@ var Menu = React.createClass({
         });
     },
 
-    toggleNavClick: function() {
+    toggleNavClick: function(e) {
+        if("hamburger" !== e.target.id) return;
         var closeNav = this.state.sliderVisible ? true : false;
         var b=$("body");
         var cf=$(".container-fluid");
@@ -375,7 +376,7 @@ var Menu = React.createClass({
         return (<section>
             <div style={divStyle} id="menu">
                 <ul style={ulStyle}>
-                    <li  style={liStyle} className="hidden-lg">
+                    <li  style={liStyle} className="hidden-lg"  >
                         <div onClick={this.toggleNavClick} style={inFront} id="hamburgerButton"  />
                     </li>
                     <li  style={liFontStyle}>

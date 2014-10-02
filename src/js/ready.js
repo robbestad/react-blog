@@ -112,6 +112,7 @@
 // and color.
     hb.HamburgerButton = function(container, size, color) {
         this.canvas = document.createElement('canvas');
+        this.canvas.id="hamburger";
         this.ctx = this.canvas.getContext('2d');
 // Configure all the styles and dimensions for the button.
         this.padding = size * 0.1;
