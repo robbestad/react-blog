@@ -1,4 +1,4 @@
-# Robbestad.com Blog
+# This project is now __deprecated__. It will not be updated nor worked on in the future.
 
 Updated blog platform
 
