@@ -1,8 +1,6 @@
 # This project is now __deprecated__. It will not be updated nor worked on in the future.
 
-# The project that replaces this is here:
-
-[robbestad.com at github](https://github.com/svenanders/robbestad.com)
+### The project that replaces this is here: [robbestad.com at github](https://github.com/svenanders/robbestad.com)
 
 
 
