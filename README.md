@@ -1,5 +1,15 @@
 # This project is now __deprecated__. It will not be updated nor worked on in the future.
 
+# The project that replaces this is here:
+
+[robbestad.com at github]https://github.com/svenanders/robbestad.com
+
+
+
+### old doc below
+
+
+
 Updated blog platform
 
 Check out [the result](http://robbestad.herokuapp.com/)
